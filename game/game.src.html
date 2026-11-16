@@ -482,9 +482,9 @@ function sim(h){
 }
 
 /* ===== drawing: 1080x1920 TikTok portrait screen ===== */
-const CW=1080,CH=1920,AX=540,AY=812;      // arena centre on screen
+const CW=1080,CH=1920,AX=540,AY=836;      // arena centre on screen
 let ASC=1.5;                              // game units -> px, set per map so the rim always ends 75 px from the screen edge
-function arenaScale(th){return 270/CFG.R0;}
+function arenaScale(th){return 300/CFG.R0;}
 const cv=$('#cv'),ctx=cv.getContext('2d');cv.width=CW;cv.height=CH;
 const MAPKEY={normal:'fair',th_frog:'frog',th_beetle:'desert',th_pig:'pig',th_cock:'cock',th_bey:'bey'};
 function ld(o){const i=new Image();i.src=o.u;i.meta=o;return i;}
@@ -596,7 +596,7 @@ function drawCountdown(){
   if(S.phase!=='setup')return;
   const n=Math.ceil(S.t),s=String(n),last=S.t<=3;
   drawDigits(s,AX,AY,300,.34);                       // big faint number in the middle of the arena
-  const pulse=last?1+.12*Math.abs(Math.sin(S.t*Math.PI*2)):1,BX=990,BY=440;   // badge top right, beside the how-to strip
+  const pulse=last?1+.12*Math.abs(Math.sin(S.t*Math.PI*2)):1,BX=984,BY=404;   // badge top right, beside the how-to strip
   ctx.save();ctx.translate(BX,BY);ctx.scale(pulse,pulse);
   ctx.beginPath();ctx.arc(0,0,66,0,TAU);ctx.fillStyle=last?'rgba(120,10,30,.7)':'rgba(30,14,48,.66)';ctx.fill();
   ctx.lineWidth=5;ctx.strokeStyle=last?'#ff5470':'#fdebc6';ctx.stroke();ctx.restore();
@@ -688,7 +688,7 @@ const RIGHTG=[
   {g:'th_cock',t:'ลานไก่ชน',n:'Mishka Bear'},{g:'th_bey',t:'เบเบลด',n:'Hat and Mustache'}
 ];
 const FREEG=[{f:'like',t:'กดใจ',n:'ล็อกทิศ'},{f:'follow',t:'ติดตาม',n:'โจมตี ×2'},{f:'share',t:'แชร์',n:'พุ่งเร็วขึ้น'}];
-const PNL={y:574,h:536,lx:10,rx:820,w:250,ic:42};
+const PNL={y:566,h:560,lx:8,rx:846,w:226,ic:38};
 let gSize=0;
 function calcGiftSize(){
   if(gSize)return gSize;const tw=PNL.w-22-PNL.ic-12-16;let m=30;
@@ -717,7 +717,7 @@ function drawPanel(items,x,title,sepAfter){
   ctx.restore();
 }
 function drawFreeFrame(){   // like / follow / share: their own frame under the arena
-  const w=500,h=62,x=AX-w/2,y=1092,cw=w/3;
+  const w=500,h=60,x=AX-w/2,y=1146,cw=w/3;
   ctx.save();
   ctx.beginPath();ctx.roundRect(x,y,w,h,26);ctx.fillStyle='rgba(38,22,56,.94)';ctx.fill();ctx.lineWidth=5;ctx.strokeStyle='#fdebc6';ctx.stroke();
   FREEG.forEach((it,i)=>{
@@ -728,13 +728,14 @@ function drawFreeFrame(){   // like / follow / share: their own frame under the 
   });
   ctx.restore();
 }
-function drawPanels(){drawPanel(LEFTG,PNL.lx,null,0);drawPanel(RIGHTG,PNL.rx,'ล็อกแมพทั้งเกม',0);drawFreeFrame();}
-const HOWTO=[['เข้าไลฟ์','ได้รถทันที'],['กดใจเพื่อล็อกทิศทาง','ก่อนหมดเวลา 10 วิ'],['ชน!','รถทุกคันพุ่งพร้อมกัน'],['ตกขอบ = ออก','คันสุดท้ายชนะ']];
+function drawPanels(){drawPanel(LEFTG,PNL.lx,null,0);drawPanel(RIGHTG,PNL.rx,'ล็อกแมพ',0);drawFreeFrame();}
+const HOWTO=[['เข้าไลฟ์','ได้รถ'],['กดใจ ล็อกทิศ','ก่อนหมด 10 วิ'],['ชน!','พุ่งพร้อมกัน'],['ตกขอบ = ออก','เหลือคันเดียวชนะ']];
 function plate(x,y,w,h){ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,h,h*.3);ctx.fillStyle='#fdebc6';ctx.fill();ctx.lineWidth=4;ctx.strokeStyle='#7a3a5a';ctx.stroke();ctx.setLineDash([8,6]);ctx.lineWidth=2.5;ctx.strokeStyle='#e8a2ae';ctx.beginPath();ctx.roundRect(x+7,y+7,w-14,h-14,h*.24);ctx.stroke();ctx.restore();}
 function drawHowto(){
   const hw=A.ui.howto;if(!ok(hw))return;
-  const r=fitBox(hw,60,350,960,184);
-  if(r)HOWTO.forEach((lines,i)=>{const b=tbRect(hw,r,hw.meta.tbs[i],0,0),pw=r[2]/4*.95,ph=66,px=b[0]+b[2]/2-pw/2,py=b[1]-5;plate(px,py,pw,ph);boxText(lines,[px+10,py+9,pw-20,ph-18],INK,26);});
+  const r=fitBox(hw,40,326,1000,206);
+  let hs=40;if(r){const pw0=r[2]/4*.97-16;HOWTO.forEach(l=>{hs=Math.min(hs,fitSize(l,[0,0,pw0,(98-20)],40));});}
+  if(r)HOWTO.forEach((lines,i)=>{const b=tbRect(hw,r,hw.meta.tbs[i],0,0),pw=r[2]/4*.97,ph=98,px=b[0]+b[2]/2-pw/2,py=b[1]-14;plate(px,py,pw,ph);boxText(lines,[px+8,py+10,pw-16,ph-20],INK,hs);});
 }
 function drawClashBurst(){
   if(S.phase!=='clash'||S.clashT>1)return;
