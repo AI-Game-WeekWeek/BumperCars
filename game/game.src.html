@@ -483,10 +483,10 @@ function sim(h){
 }
 
 /* ===== drawing: 1080x1920 TikTok portrait screen ===== */
-const CW=1080,CH=2400,OFF=300,AX=540,AY=712;   // 1080x2400 = a 9:20 phone screen; OFF keeps everything below the TikTok top bar
+const CW=1080,CH=2400,OFF=300,AX=540,AY=806;   // 1080x2400 = a 9:20 phone screen; OFF keeps everything below the TikTok top bar
       // arena centre on screen
 let ASC=1.5;                              // game units -> px, set per map so the rim always ends 75 px from the screen edge
-function arenaScale(th){return 352/CFG.R0;}
+function arenaScale(th){return 340/CFG.R0;}
 const cv=$('#cv'),ctx=cv.getContext('2d');cv.width=CW;cv.height=CH;
 const MAPKEY={normal:'fair',th_frog:'frog',th_beetle:'desert',th_pig:'pig',th_cock:'cock',th_bey:'bey'};
 function ld(o){const i=new Image();i.src=o.u;i.meta=o;return i;}
@@ -599,7 +599,7 @@ function drawCountdown(){
   if(S.phase!=='setup')return;
   const n=Math.ceil(S.t),s=String(n),last=S.t<=3;
   drawDigits(s,AX,AY,300,.34);                       // big faint number in the middle of the arena
-  const pulse=last?1+.12*Math.abs(Math.sin(S.t*Math.PI*2)):1,BX=968,BY=905;   // badge top right, beside the how-to strip
+  const pulse=last?1+.12*Math.abs(Math.sin(S.t*Math.PI*2)):1,BX=968,BY=930;   // badge top right, beside the how-to strip
   ctx.save();ctx.translate(BX,BY);ctx.scale(pulse,pulse);
   ctx.beginPath();ctx.arc(0,0,66,0,TAU);ctx.fillStyle=last?'rgba(120,10,30,.7)':'rgba(30,14,48,.66)';ctx.fill();
   ctx.lineWidth=5;ctx.strokeStyle=last?'#ff5470':'#fdebc6';ctx.stroke();ctx.restore();
@@ -719,19 +719,19 @@ function drawPanel(items,x,title,sepAfter,o){
   }
   ctx.restore();
 }
-function drawFreeFrame(){   // like / follow / share: own frame under the map panel
-  const x=PNL.rx,w=PNL.w,y=398,h=128,rh=h/3;
+function drawFreeFrame(){   // like / follow / share: own frame, centre top, just above the arena
+  const w=640,h=64,x=AX-w/2,y=392,cw=w/3;
   ctx.save();
-  ctx.beginPath();ctx.roundRect(x,y,w,h,26);ctx.fillStyle='rgba(38,22,56,.94)';ctx.fill();ctx.lineWidth=5;ctx.strokeStyle='#fdebc6';ctx.stroke();
+  ctx.beginPath();ctx.roundRect(x,y,w,h,28);ctx.fillStyle='rgba(38,22,56,.94)';ctx.fill();ctx.lineWidth=5;ctx.strokeStyle='#fdebc6';ctx.stroke();
   FREEG.forEach((it,i)=>{
-    const cy=y+i*rh+rh/2;
-    if(i>0){ctx.setLineDash([6,6]);ctx.lineWidth=2;ctx.strokeStyle='rgba(232,162,174,.7)';ctx.beginPath();ctx.moveTo(x+16,y+i*rh);ctx.lineTo(x+w-16,y+i*rh);ctx.stroke();ctx.setLineDash([]);}
-    ctx.beginPath();ctx.arc(x+34,cy,20,0,TAU);ctx.fillStyle='rgba(255,243,207,.2)';ctx.fill();glyph(it.f,x+34,cy,34);
-    lt(it.t,x+64,cy-7,w-72,22,'#fff6dc');lt(it.n,x+64,cy+12,w-72,15,'#ffd166');
+    const cx0=x+i*cw,cy=y+h/2;
+    if(i>0){ctx.setLineDash([6,6]);ctx.lineWidth=2;ctx.strokeStyle='rgba(232,162,174,.7)';ctx.beginPath();ctx.moveTo(cx0,y+12);ctx.lineTo(cx0,y+h-12);ctx.stroke();ctx.setLineDash([]);}
+    ctx.beginPath();ctx.arc(cx0+32,cy,23,0,TAU);ctx.fillStyle='rgba(255,243,207,.2)';ctx.fill();glyph(it.f,cx0+32,cy,38);
+    lt(it.t,cx0+64,cy-9,cw-70,27,'#fff6dc');lt(it.n,cx0+64,cy+16,cw-70,19,'#ffd166');
   });
   ctx.restore();
 }
-function drawPanels(){drawPanel(LEFTG,PNL.lx,null,0);drawPanel(RIGHTG,PNL.rx,'ล็อกแมพ',0,{y:76,h:312});drawFreeFrame();}
+function drawPanels(){drawPanel(LEFTG,PNL.lx,null,0);drawPanel(RIGHTG,PNL.rx,'ล็อกแมพ',0,{y:76,h:450});drawFreeFrame();}
 const HOWTO=[['เข้าไลฟ์','ได้รถ'],['กดใจ ล็อกทิศ','ก่อนหมด 10 วิ'],['ชน!','พุ่งพร้อมกัน'],['ตกขอบ = ออก','เหลือคันเดียวชนะ']];
 function plate(x,y,w,h){ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,h,h*.3);ctx.fillStyle='#fdebc6';ctx.fill();ctx.lineWidth=4;ctx.strokeStyle='#7a3a5a';ctx.stroke();ctx.setLineDash([8,6]);ctx.lineWidth=2.5;ctx.strokeStyle='#e8a2ae';ctx.beginPath();ctx.roundRect(x+7,y+7,w-14,h-14,h*.24);ctx.stroke();ctx.restore();}
 function drawHowto(){
