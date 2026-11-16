@@ -222,7 +222,7 @@ const ASSETS=__ASSETS__;
 const IMG=ASSETS.gifts;
 const $=s=>document.querySelector(s);
 const TAU=Math.PI*2, DEG=Math.PI/180;
-const CFG={rounds:5,count:10,R0:270,R1:85,carR:46,clashMax:6,slide:1.1,friction:1.5,spin:2.2,maxCars:20};
+const CFG={rounds:5,count:10,R0:270,R1:85,carR:46,clashMax:6,slide:.8,friction:1.5,spin:2.2,maxCars:20};
 const C={bg:'#17141d',floor:'#2b2636',bulb:'#ffbd2e',hot:'#ff5470',cool:'#37d3bb',fg:'#f4efe4',line:'#3b3447'};
 const NAMES=['พี่ต้น','น้องมิ้นท์','เจ๊หมวย','ลุงแมว','ป้าพลอย','บอลหล่อ','แพรวา','น้องบัว','ตี๋เล็ก','หนูนา','ครูเอ','มายด์','เก่งกาจ','ฟ้าใส','โอ๊ตตี้','ก้อยยี่','นายหมี','เจนจิ','พลอยชมพู','ต้นกล้า','ขวัญใจ','ปุ๊กกี้','แจ็คกี้','มะนาว'];
 const GIFTS=[
@@ -285,7 +285,7 @@ function ensureBots(addCars=true){
     const used=new Set(bs.map(b=>b.name)),cand=BOTS.filter(x=>!used.has(x.name)),d=cand[Math.floor(Math.random()*cand.length)];
     const v={id:nextId++,name:d.name,hue:Math.floor(Math.random()*360),ini:initial(d.name),bot:true,img:d.img};
     viewers.push(v);bs.push(v);
-    if(addCars&&S.phase==='setup'){S.cars.push(mkCar(v));separateAll();}
+    if(addCars&&S.phase==='setup'&&S.round===1){S.cars.push(mkCar(v));separateAll();}
   }
 }
 function newViewer(){
@@ -298,8 +298,8 @@ function mkCar(v){
 }
 function joinViewer(v){
   
-  sfx('join');if(S.phase==='setup'){setCR(aliveCars().length+1);S.cars.push(mkCar(v));separateAll();log(v.name+' เข้าไลฟ์ ได้รถ');}
-  else{S.pending.push(v);log(v.name+' เข้าไลฟ์ รอรอบหน้า');}
+  sfx('join');if(S.phase==='setup'&&S.round===1){setCR(aliveCars().length+1);S.cars.push(mkCar(v));separateAll();log(v.name+' เข้าไลฟ์ ได้รถ');}
+  else{S.pending.push(v);log(v.name+' เข้าไลฟ์ รอเกมถัดไป (เกมนี้เริ่มแล้ว)');}
   ensureBots();
   renderWho();
 }
@@ -317,8 +317,8 @@ function newGame(){
 function startSetup(){
   S.round++;S.windA=Math.random()*TAU;if(!S.mapLocked){S.votes={};S.lastTheme='';}
   S.cars.forEach(c=>{if(c.alive){c.locked=false;c.lockNearest=false;c.atk=1;c.spd=1;c.delay=0;c.launchIn=0;c.vx=c.vy=0;c.cd={};if(c.bot)c.botT=1+Math.random()*7;}});
-  setCR(aliveCars().length+S.pending.length);S.pending.splice(0).forEach(v=>S.cars.push(mkCar(v)));separateAll();
-  S.phase='setup';S.t=CFG.count;ensureBots();spawnItems();renderWho();log('รอบ '+S.round+' เริ่ม แช่แข็งแล้วล็อกทิศทาง');
+  setCR(aliveCars().length);separateAll();
+  S.phase='setup';S.t=CFG.count;ensureBots(false);spawnItems();renderWho();log('รอบ '+S.round+' เริ่ม แช่แข็งแล้วล็อกทิศทาง');
 }
 function freeSpot(){   // best of many random spots: the one farthest from every car already on the floor
   const R=Math.max(10,S.R-CR*1.6),alive=S.cars.filter(c=>c.alive),tries=alive.length>200?8:48;let best=[0,0],bd=-1;
@@ -362,7 +362,8 @@ function giftOk(){return S.phase!=='over';}
 function giveGift(id,gid,n){
   const c=S.cars.find(x=>x.id===id); const v=viewers.find(x=>x.id===id); const g=GIFTS.find(x=>x.id===gid);
   if(!v||!g)return;
-  if(!c||!c.alive){log(v.name+' ส่ง '+g.name+' แต่ตกรอบแล้ว');return;}
+  if(!c){log(v.name+' ส่ง '+g.name+' แต่ยังรอเกมถัดไป');return;}
+  if(!c.alive){log(v.name+' ส่ง '+g.name+' แต่ตกรอบแล้ว');return;}
   const setupOnly=['gg','tiktok','rose','ice'].includes(gid)||gid.startsWith('th_');
   if(S.phase==='over'){return;}
   if(setupOnly&&S.phase!=='setup'){log(v.name+' ส่ง '+g.name+' ช้าไป รอรอบหน้า');return;}
