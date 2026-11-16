@@ -259,7 +259,7 @@ S.fx=[];function fx(k,x,y,sz){if(S.fx.length>70)return;S.fx.push({k,x,y,l:.5,L:.
 const viewers=[]; let nextId=1, amt=1, simT=1, joinT=5;
 let CR=CFG.carR, logDirty=false, whoDirty=false;
 S.votes={};S.theme='normal';S.fr=CFG.friction;S.lastTheme='';
-function leadTheme(){let best='normal',bv=0;for(const k in S.votes){const v=S.votes[k];if(v>bv||(v===bv&&v>0&&k===S.lastTheme)){best=k;bv=v;}}return best;}
+function leadTheme(){if(S.mapLocked)return S.theme;let best='normal',bv=0;for(const k in S.votes){const v=S.votes[k];if(v>bv||(v===bv&&v>0&&k===S.lastTheme)){best=k;bv=v;}}return best;}
 function setCR(n){CR=Math.max(3,Math.min(CFG.carR,200/Math.sqrt(Math.max(1,n)),.44*S.R/Math.sqrt(Math.max(1,n))));}
 
 function R_of(r){return CFG.R0+(CFG.R1-CFG.R0)*(r-1)/(CFG.rounds-1);}
@@ -309,13 +309,13 @@ function spawnItems(){
   for(let i=0;i<n;i++){const a=Math.random()*TAU,r=Math.sqrt(Math.random())*(S.R-35);S.items.push({x:Math.cos(a)*r,y:Math.sin(a)*r,type:types[Math.floor(Math.random()*3)]});}
 }
 function newGame(){
-  S.votes={};S.theme='normal';S.fr=CFG.friction;S.lastTheme='';S.flipped=false;S.windA=Math.random()*TAU;S.round=1;S.R=CFG.R0;S.cars=[];S.items=[];S.parts=[];S.winner=null;S.phase='setup';S.t=CFG.count;
+  S.votes={};S.theme='normal';S.fr=CFG.friction;S.lastTheme='';S.mapLocked=false;S.flipped=false;S.windA=Math.random()*TAU;S.round=1;S.R=CFG.R0;S.cars=[];S.items=[];S.parts=[];S.winner=null;S.phase='setup';S.t=CFG.count;
   S.pending=[];S.fx=[];
   ensureBots(false);setCR(viewers.length);viewers.forEach(v=>S.cars.push(mkCar(v)));separateAll();
   spawnItems(); log('เริ่มเกมใหม่'); renderWho();
 }
 function startSetup(){
-  S.round++;S.windA=Math.random()*TAU;S.votes={};S.theme='normal';S.fr=CFG.friction;S.lastTheme='';
+  S.round++;S.windA=Math.random()*TAU;if(!S.mapLocked){S.votes={};S.lastTheme='';}
   S.cars.forEach(c=>{if(c.alive){c.locked=false;c.lockNearest=false;c.atk=1;c.spd=1;c.delay=0;c.launchIn=0;c.vx=c.vy=0;c.cd={};if(c.bot)c.botT=1+Math.random()*7;}});
   setCR(aliveCars().length+S.pending.length);S.pending.splice(0).forEach(v=>S.cars.push(mkCar(v)));separateAll();
   S.phase='setup';S.t=CFG.count;ensureBots();spawnItems();renderWho();log('รอบ '+S.round+' เริ่ม แช่แข็งแล้วล็อกทิศทาง');
@@ -375,6 +375,7 @@ function giveGift(id,gid,n){
   else if(gid==='awesome'){fx('heal',c.x,c.y,CR*2.8);c.hp=Math.min(100,c.hp+40*n);log(v.name+' ฮีลเป็น '+Math.round(c.hp));}
   else if(gid==='flip'){flipBoard(c,v);}
   else if(gid.startsWith('th_')){
+    if(S.mapLocked){log(v.name+' ส่ง '+g.name+' แต่แมพล็อกแล้วทั้งเกม');return;}
     if(S.t<=3){log(v.name+' ส่ง '+g.name+' ช้าไป แมพล็อกแล้ว');return;}
     S.votes[gid]=(S.votes[gid]||0)+n;S.lastTheme=gid;log(v.name+' ส่ง '+g.name+' ×'+n+' โหวตแมพ'+THEMES[gid].name+' ('+S.votes[gid]+')');
   }
@@ -384,7 +385,7 @@ function doShare(id){const c=S.cars.find(x=>x.id===id&&x.alive),v=viewers.find(x
 
 function doLike(id){const c=S.cars.find(x=>x.id===id&&x.alive),v=viewers.find(x=>x.id===id);if(!c||S.phase!=='setup')return;if(c.locked)return;c.locked=true;log(v.name+' ไลก์ ล็อกลูกศรที่ '+Math.round(((c.head/DEG)%360+360)%360)+'°');}
 function startClash(){
-  S.phase='clash';S.clashT=0;S.theme=leadTheme();S.fr=CFG.friction*THEMES[S.theme].fr;
+  S.phase='clash';S.clashT=0;if(!S.mapLocked){S.theme=leadTheme();if(S.theme!=='normal')S.mapLocked=true;}S.fr=CFG.friction*THEMES[S.theme].fr;
   for(const c of aliveCars()){
     if(c.lockNearest){const e=nearestEnemy(c);if(e)c.head=Math.atan2(e.y-c.y,e.x-c.x);}
     const sp=CFG.slide*S.R*CFG.friction*c.spd; c.pv={x:Math.cos(c.head)*sp,y:Math.sin(c.head)*sp};
@@ -680,12 +681,11 @@ function lt(txt,x,y,maxW,size,col){   // left-aligned text, shrinks to fit, cent
 const LEFTG=[
   {g:'gg',t:'หมุนซ้าย',n:'GG'},{g:'tiktok',t:'หมุนขวา',n:'TikTok'},{g:'rose',t:'พุ่งชนใกล้สุด',n:'Rose'},
   {g:'love',t:'โล่ 1 ครั้ง',n:'Love you so much'},{g:'awesome',t:'ฮีลเลือด',n:"You're awesome"},
-  {g:'donut',t:'กงจักรตีไกล',n:'Doughnut'},{g:'ice',t:'แช่แข็ง',n:'Ice Cream Cone'}
+  {g:'donut',t:'กงจักรตีไกล',n:'Doughnut'},{g:'ice',t:'แช่แข็ง',n:'Ice Cream Cone'},{g:'flip',t:'ล้มกระดาน',n:'Boxing Gloves'}
 ];
 const RIGHTG=[
   {g:'th_frog',t:'หนองบึง',n:'Tiny Diny'},{g:'th_beetle',t:'ทะเลทราย',n:'Finger Heart'},{g:'th_pig',t:'ทุ่งหญ้า',n:'G.O.A.T. Busker'},
-  {g:'th_cock',t:'ลานไก่ชน',n:'Mishka Bear'},{g:'th_bey',t:'เบเบลด',n:'Hat and Mustache'},
-  {g:'flip',t:'ล้มกระดาน',n:'Boxing Gloves'}
+  {g:'th_cock',t:'ลานไก่ชน',n:'Mishka Bear'},{g:'th_bey',t:'เบเบลด',n:'Hat and Mustache'}
 ];
 const FREEG=[{f:'like',t:'กดใจ',n:'ล็อกทิศ'},{f:'follow',t:'ติดตาม',n:'โจมตี ×2'},{f:'share',t:'แชร์',n:'พุ่งเร็วขึ้น'}];
 const PNL={y:574,h:536,lx:10,rx:820,w:250,ic:42};
@@ -728,7 +728,7 @@ function drawFreeFrame(){   // like / follow / share: their own frame under the 
   });
   ctx.restore();
 }
-function drawPanels(){drawPanel(LEFTG,PNL.lx,null,0);drawPanel(RIGHTG,PNL.rx,'เปลี่ยนแมพ',0);drawFreeFrame();}
+function drawPanels(){drawPanel(LEFTG,PNL.lx,null,0);drawPanel(RIGHTG,PNL.rx,'ล็อกแมพทั้งเกม',0);drawFreeFrame();}
 const HOWTO=[['เข้าไลฟ์','ได้รถทันที'],['กดใจเพื่อล็อกทิศทาง','ก่อนหมดเวลา 10 วิ'],['ชน!','รถทุกคันพุ่งพร้อมกัน'],['ตกขอบ = ออก','คันสุดท้ายชนะ']];
 function plate(x,y,w,h){ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,h,h*.3);ctx.fillStyle='#fdebc6';ctx.fill();ctx.lineWidth=4;ctx.strokeStyle='#7a3a5a';ctx.stroke();ctx.setLineDash([8,6]);ctx.lineWidth=2.5;ctx.strokeStyle='#e8a2ae';ctx.beginPath();ctx.roundRect(x+7,y+7,w-14,h-14,h*.24);ctx.stroke();ctx.restore();}
 function drawHowto(){
