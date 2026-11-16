@@ -481,9 +481,9 @@ function sim(h){
 }
 
 /* ===== drawing: 1080x1920 TikTok portrait screen ===== */
-const CW=1080,CH=1920,AX=540,AY=822;      // arena centre on screen
+const CW=1080,CH=1920,AX=540,AY=812;      // arena centre on screen
 let ASC=1.5;                              // game units -> px, set per map so the rim always ends 75 px from the screen edge
-function arenaScale(th){return 240/CFG.R0;}
+function arenaScale(th){return 270/CFG.R0;}
 const cv=$('#cv'),ctx=cv.getContext('2d');cv.width=CW;cv.height=CH;
 const MAPKEY={normal:'fair',th_frog:'frog',th_beetle:'desert',th_pig:'pig',th_cock:'cock',th_bey:'bey'};
 function ld(o){const i=new Image();i.src=o.u;i.meta=o;return i;}
@@ -595,13 +595,13 @@ function drawCountdown(){
   if(S.phase!=='setup')return;
   const n=Math.ceil(S.t),s=String(n),last=S.t<=3;
   drawDigits(s,AX,AY,300,.34);                       // big faint number in the middle of the arena
-  const pulse=last?1+.12*Math.abs(Math.sin(S.t*Math.PI*2)):1,BX=992,BY=476;   // badge top right, beside the how-to strip
+  const pulse=last?1+.12*Math.abs(Math.sin(S.t*Math.PI*2)):1,BX=990,BY=440;   // badge top right, beside the how-to strip
   ctx.save();ctx.translate(BX,BY);ctx.scale(pulse,pulse);
   ctx.beginPath();ctx.arc(0,0,66,0,TAU);ctx.fillStyle=last?'rgba(120,10,30,.7)':'rgba(30,14,48,.66)';ctx.fill();
   ctx.lineWidth=5;ctx.strokeStyle=last?'#ff5470':'#fdebc6';ctx.stroke();ctx.restore();
   drawDigits(s,BX,BY-2,86*pulse,1);
   ftext('เหลือเวลา',BX,BY-88,150,24,'#fff6dc','#14111a');
-  ftext('วินาที',BX,BY+90,150,24,'#fff6dc','#14111a');
+  ftext('วินาที',BX,BY+84,150,24,'#fff6dc','#14111a');
 }
 
 /* ---- things inside the arena (game units) ---- */
@@ -653,13 +653,13 @@ function drawCar(c){
 const INK='#5a3340';
 function drawHud(tk){
   const H=A.ui.hud,M=A.map[tk]||A.map.normal;
-  let r=fitBox(H.round_plate,16,190,320,168);
+  let r=fitBox(H.round_plate,16,192,310,152);
   if(r)boxText('รอบ '+Math.min(S.round,CFG.rounds)+'/'+CFG.rounds,tbRect(H.round_plate,r,H.round_plate.meta.tb,.02,.02),INK,92);
-  r=fitBox(H.map_banner,270,190,540,168);
+  r=fitBox(H.map_banner,270,192,540,152);
   if(r){const hm=H.map_banner,sx=r[2]/hm.naturalWidth,sy=r[3]/hm.naturalHeight,tb=hm.meta.tb,sk=hm.meta.sock||[tb[0]*.42,hm.naturalHeight/2,hm.naturalHeight*.3],bx=r[0]+sk[0]*sx,by=r[1]+sk[1]*sy,br=sk[2]*sx*.97;
     if(ok(M.badge)){ctx.save();ctx.beginPath();ctx.arc(bx,by,br,0,TAU);ctx.clip();ctx.drawImage(M.badge,bx-br,by-br,br*2,br*2);ctx.restore();}
     boxText(THEMES[tk].name,tbRect(hm,r,tb,.02,.04),INK,84);}
-  r=fitBox(H.alive_plate,744,190,320,168);
+  r=fitBox(H.alive_plate,754,192,310,152);
   if(r)boxText('เหลือ '+aliveCars().length,tbRect(H.alive_plate,r,H.alive_plate.meta.tb,.02,.02),INK,84);
 }
 /* gift menu: a panel drawn here (not a picture): title, then 4 gifts per page as  picture + what it does + gift name */
@@ -688,7 +688,7 @@ const RIGHTG=[
   {g:'flip',t:'ล้มกระดาน',n:'Boxing Gloves'}
 ];
 const FREEG=[{f:'like',t:'กดใจ',n:'ล็อกทิศ'},{f:'follow',t:'ติดตาม',n:'โจมตี ×2'},{f:'share',t:'แชร์',n:'พุ่งเร็วขึ้น'}];
-const PNL={y:632,h:486,lx:10,rx:794,w:276,ic:44};
+const PNL={y:574,h:536,lx:10,rx:820,w:250,ic:42};
 let gSize=0;
 function calcGiftSize(){
   if(gSize)return gSize;const tw=PNL.w-22-PNL.ic-12-16;let m=30;
@@ -717,7 +717,7 @@ function drawPanel(items,x,title,sepAfter){
   ctx.restore();
 }
 function drawFreeFrame(){   // like / follow / share: their own frame under the arena
-  const w=480,h=68,x=AX-w/2,y=1070,cw=w/3;
+  const w=500,h=62,x=AX-w/2,y=1092,cw=w/3;
   ctx.save();
   ctx.beginPath();ctx.roundRect(x,y,w,h,26);ctx.fillStyle='rgba(38,22,56,.94)';ctx.fill();ctx.lineWidth=5;ctx.strokeStyle='#fdebc6';ctx.stroke();
   FREEG.forEach((it,i)=>{
@@ -733,7 +733,7 @@ const HOWTO=[['เข้าไลฟ์','ได้รถทันที'],['ก
 function plate(x,y,w,h){ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,h,h*.3);ctx.fillStyle='#fdebc6';ctx.fill();ctx.lineWidth=4;ctx.strokeStyle='#7a3a5a';ctx.stroke();ctx.setLineDash([8,6]);ctx.lineWidth=2.5;ctx.strokeStyle='#e8a2ae';ctx.beginPath();ctx.roundRect(x+7,y+7,w-14,h-14,h*.24);ctx.stroke();ctx.restore();}
 function drawHowto(){
   const hw=A.ui.howto;if(!ok(hw))return;
-  const r=fitBox(hw,60,364,960,200);
+  const r=fitBox(hw,60,350,960,184);
   if(r)HOWTO.forEach((lines,i)=>{const b=tbRect(hw,r,hw.meta.tbs[i],0,0),pw=r[2]/4*.95,ph=66,px=b[0]+b[2]/2-pw/2,py=b[1]-5;plate(px,py,pw,ph);boxText(lines,[px+10,py+9,pw-20,ph-18],INK,26);});
 }
 function drawClashBurst(){
