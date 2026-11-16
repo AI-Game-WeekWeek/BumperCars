@@ -483,10 +483,10 @@ function sim(h){
 }
 
 /* ===== drawing: 1080x1920 TikTok portrait screen ===== */
-const CW=1080,CH=2400,OFF=300,AX=540,AY=832;   // 1080x2400 = a 9:20 phone screen; OFF keeps everything below the TikTok top bar
+const CW=1080,CH=2400,OFF=96,AX=540,AY=985;   // 1080x2400 = a 9:20 phone screen; OFF = small top margin
       // arena centre on screen
 let ASC=1.5;                              // game units -> px, set per map so the rim always ends 75 px from the screen edge
-function arenaScale(th){return 340/CFG.R0;}
+function arenaScale(th){return 472/CFG.R0;}
 const cv=$('#cv'),ctx=cv.getContext('2d');cv.width=CW;cv.height=CH;
 const MAPKEY={normal:'fair',th_frog:'frog',th_beetle:'desert',th_pig:'pig',th_cock:'cock',th_bey:'bey'};
 function ld(o){const i=new Image();i.src=o.u;i.meta=o;return i;}
@@ -599,7 +599,7 @@ function drawCountdown(){
   if(S.phase!=='setup')return;
   const n=Math.ceil(S.t),s=String(n),last=S.t<=3;
   drawDigits(s,AX,AY,300,.34);                       // big faint number in the middle of the arena
-  const pulse=last?1+.12*Math.abs(Math.sin(S.t*Math.PI*2)):1,BX=968,BY=950;   // badge top right, beside the how-to strip
+  const pulse=last?1+.12*Math.abs(Math.sin(S.t*Math.PI*2)):1,BX=944,BY=1352;   // badge top right, beside the how-to strip
   ctx.save();ctx.translate(BX,BY);ctx.scale(pulse,pulse);
   ctx.beginPath();ctx.arc(0,0,66,0,TAU);ctx.fillStyle=last?'rgba(120,10,30,.7)':'rgba(30,14,48,.66)';ctx.fill();
   ctx.lineWidth=5;ctx.strokeStyle=last?'#ff5470':'#fdebc6';ctx.stroke();ctx.restore();
