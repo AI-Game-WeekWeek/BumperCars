@@ -482,9 +482,9 @@ function sim(h){
 }
 
 /* ===== drawing: 1080x1920 TikTok portrait screen ===== */
-const CW=1080,CH=1920,AX=540,AY=836;      // arena centre on screen
+const CW=1080,CH=1920,AX=540,AY=1498;      // arena centre on screen
 let ASC=1.5;                              // game units -> px, set per map so the rim always ends 75 px from the screen edge
-function arenaScale(th){return 300/CFG.R0;}
+function arenaScale(th){return 358/CFG.R0;}
 const cv=$('#cv'),ctx=cv.getContext('2d');cv.width=CW;cv.height=CH;
 const MAPKEY={normal:'fair',th_frog:'frog',th_beetle:'desert',th_pig:'pig',th_cock:'cock',th_bey:'bey'};
 function ld(o){const i=new Image();i.src=o.u;i.meta=o;return i;}
@@ -596,7 +596,7 @@ function drawCountdown(){
   if(S.phase!=='setup')return;
   const n=Math.ceil(S.t),s=String(n),last=S.t<=3;
   drawDigits(s,AX,AY,300,.34);                       // big faint number in the middle of the arena
-  const pulse=last?1+.12*Math.abs(Math.sin(S.t*Math.PI*2)):1,BX=984,BY=404;   // badge top right, beside the how-to strip
+  const pulse=last?1+.12*Math.abs(Math.sin(S.t*Math.PI*2)):1,BX=986,BY=428;   // badge top right, beside the how-to strip
   ctx.save();ctx.translate(BX,BY);ctx.scale(pulse,pulse);
   ctx.beginPath();ctx.arc(0,0,66,0,TAU);ctx.fillStyle=last?'rgba(120,10,30,.7)':'rgba(30,14,48,.66)';ctx.fill();
   ctx.lineWidth=5;ctx.strokeStyle=last?'#ff5470':'#fdebc6';ctx.stroke();ctx.restore();
@@ -688,15 +688,15 @@ const RIGHTG=[
   {g:'th_cock',t:'ลานไก่ชน',n:'Mishka Bear'},{g:'th_bey',t:'เบเบลด',n:'Hat and Mustache'}
 ];
 const FREEG=[{f:'like',t:'กดใจ',n:'ล็อกทิศ'},{f:'follow',t:'ติดตาม',n:'โจมตี ×2'},{f:'share',t:'แชร์',n:'พุ่งเร็วขึ้น'}];
-const PNL={y:566,h:560,lx:8,rx:846,w:226,ic:38};
+const PNL={y:598,h:462,lx:12,rx:546,w:522,ic:46};
 let gSize=0;
 function calcGiftSize(){
-  if(gSize)return gSize;const tw=PNL.w-22-PNL.ic-12-16;let m=30;
-  for(const it of LEFTG.concat(RIGHTG)){let s=30;ctx.font='500 '+s+'px '+FONT;while(ctx.measureText(it.t).width>tw&&s>9){s--;ctx.font='500 '+s+'px '+FONT;}m=Math.min(m,s);}
+  if(gSize)return gSize;const tw=PNL.w-22-PNL.ic-12-16;let m=29;
+  for(const it of LEFTG.concat(RIGHTG)){let s=29;ctx.font='500 '+s+'px '+FONT;while(ctx.measureText(it.t).width>tw&&s>9){s--;ctx.font='500 '+s+'px '+FONT;}m=Math.min(m,s);}
   return gSize=m;
 }
 function drawPanel(items,x,title,sepAfter){
-  const {y,h,w,ic}=PNL,sz=calcGiftSize(),rh=(h-48)/items.length,top=y+34;
+  const {y,h,w,ic}=PNL,sz=calcGiftSize(),rh=(h-40)/Math.max(items.length,7),top=y+26;
   ctx.save();
   ctx.beginPath();ctx.roundRect(x,y,w,h,30);ctx.fillStyle='rgba(38,22,56,.94)';ctx.fill();ctx.lineWidth=6;ctx.strokeStyle='#fdebc6';ctx.stroke();
   ctx.setLineDash([10,8]);ctx.lineWidth=2.5;ctx.strokeStyle='rgba(232,162,174,.8)';ctx.beginPath();ctx.roundRect(x+11,y+11,w-22,h-22,22);ctx.stroke();ctx.setLineDash([]);
@@ -706,7 +706,7 @@ function drawPanel(items,x,title,sepAfter){
     ctx.beginPath();ctx.arc(ix+ic/2,cy,ic/2+1,0,TAU);ctx.fillStyle='rgba(255,243,207,.2)';ctx.fill();
     if(it.g&&ok(imgs[it.g]))ctx.drawImage(imgs[it.g],ix+2,iy+2,ic-4,ic-4);else if(it.f)glyph(it.f,ix+ic/2,cy,ic*.85);
     const tx=ix+ic+12,tw=w-22-ic-12-16;
-    lt(it.t,tx,cy-9,tw,sz,'#fff6dc');lt(it.n,tx,cy+16,tw,Math.max(15,Math.round(sz*.68)),'#ffd166');
+    lt(it.t,tx,cy-11,tw,sz,'#fff6dc');lt(it.n,tx,cy+17,tw,Math.max(15,Math.round(sz*.6)),'#ffd166');
   });
   if(sepAfter){const sy=top+sepAfter*rh;ctx.setLineDash([8,8]);ctx.lineWidth=2;ctx.strokeStyle='rgba(232,162,174,.7)';ctx.beginPath();ctx.moveTo(x+26,sy);ctx.lineTo(x+w-26,sy);ctx.stroke();ctx.setLineDash([]);}
   if(title){   // heading pill sits on the top border
@@ -717,14 +717,14 @@ function drawPanel(items,x,title,sepAfter){
   ctx.restore();
 }
 function drawFreeFrame(){   // like / follow / share: their own frame under the arena
-  const w=500,h=60,x=AX-w/2,y=1146,cw=w/3;
+  const w=720,h=70,x=AX-w/2,y=1076,cw=w/3;
   ctx.save();
   ctx.beginPath();ctx.roundRect(x,y,w,h,26);ctx.fillStyle='rgba(38,22,56,.94)';ctx.fill();ctx.lineWidth=5;ctx.strokeStyle='#fdebc6';ctx.stroke();
   FREEG.forEach((it,i)=>{
     const cx0=x+i*cw,cy=y+h/2;
     if(i>0){ctx.setLineDash([6,6]);ctx.lineWidth=2;ctx.strokeStyle='rgba(232,162,174,.7)';ctx.beginPath();ctx.moveTo(cx0,y+12);ctx.lineTo(cx0,y+h-12);ctx.stroke();ctx.setLineDash([]);}
-    ctx.beginPath();ctx.arc(cx0+30,cy,22,0,TAU);ctx.fillStyle='rgba(255,243,207,.2)';ctx.fill();glyph(it.f,cx0+30,cy,38);
-    lt(it.t,cx0+60,cy-9,cw-66,23,'#fff6dc');lt(it.n,cx0+60,cy+14,cw-66,16,'#ffd166');
+    ctx.beginPath();ctx.arc(cx0+36,cy,26,0,TAU);ctx.fillStyle='rgba(255,243,207,.2)';ctx.fill();glyph(it.f,cx0+36,cy,44);
+    lt(it.t,cx0+72,cy-10,cw-80,30,'#fff6dc');lt(it.n,cx0+72,cy+17,cw-80,22,'#ffd166');
   });
   ctx.restore();
 }
