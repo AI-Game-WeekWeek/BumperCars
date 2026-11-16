@@ -311,7 +311,7 @@ function spawnItems(){
   for(let i=0;i<n;i++){const a=Math.random()*TAU,r=Math.sqrt(Math.random())*(S.R-35);S.items.push({x:Math.cos(a)*r,y:Math.sin(a)*r,type:types[Math.floor(Math.random()*3)]});}
 }
 function newGame(){
-  S.votes={};S.theme='normal';S.fr=CFG.friction;S.lastTheme='';S.mapLocked=false;S.flipped=false;S.windA=Math.random()*TAU;S.round=1;S.R=CFG.R0;S.cars=[];S.items=[];S.parts=[];S.winner=null;S.phase='setup';S.t=CFG.count;
+  S.votes={};S.theme='normal';S.fr=CFG.friction;S.lastTheme='';S.mapLocked=false;S.draw=null;S.flipped=false;S.windA=Math.random()*TAU;S.round=1;S.R=CFG.R0;S.cars=[];S.items=[];S.parts=[];S.winner=null;S.phase='setup';S.t=CFG.count;
   S.pending=[];S.fx=[];
   ensureBots(false);setCR(viewers.length);viewers.forEach(v=>S.cars.push(mkCar(v)));separateAll();
   spawnItems(); log('เริ่มเกมใหม่'); renderWho();
@@ -397,6 +397,7 @@ function enterGo(){   // the word 'ชน!' shows first, the cars start a moment
   if(!S.mapLocked){S.theme=leadTheme();if(S.theme!=='normal')S.mapLocked=true;}
 }
 function startClash(){
+  if(aliveCars().length>=2&&aliveCars().every(c=>c.fz)){endDraw(aliveCars());return;}   // everyone left is frozen: nobody can win
   S.phase='clash';S.clashT=0;if(!S.mapLocked){S.theme=leadTheme();if(S.theme!=='normal')S.mapLocked=true;}S.fr=CFG.friction*THEMES[S.theme].fr;
   for(const c of aliveCars()){
     if(c.lockNearest){const e=nearestEnemy(c);if(e)c.head=Math.atan2(e.y-c.y,e.x-c.x);}
@@ -465,13 +466,17 @@ function beginShrink(){sfx('cut');
   for(const c of aliveCars()){if(Math.hypot(c.x,c.y)>S.R)eliminate(c,'หลุดวงที่บีบ');}
   if(S.Rf>S.Rt+1)for(let k=0;k<10;k++){const a=k/10*TAU+Math.random()*.4,r=(S.Rf+S.Rt)/2;fx('poof',Math.cos(a)*r,Math.sin(a)*r,80);}
 }
+function endDraw(list){   // a draw: nobody wins, the tied players are shown
+  S.draw=list.slice();S.winner=null;S.phase='over';S.overT=9;S.endT=S.time;sfx('poof');log('เสมอ '+S.draw.length+' คน ไม่มีผู้ชนะ');
+}
 function endRound(){
   S.R=S.Rt;
   for(const c of aliveCars()){if(Math.hypot(c.x,c.y)>S.R)eliminate(c,'หลุดวงที่บีบ');}
   const A=aliveCars();
   if(A.length<=1||S.round>=CFG.rounds){
-    S.winner=A.length?A.slice().sort((a,b)=>b.hp-a.hp||b.kills-a.kills)[0]:(S.cars.filter(c=>c.elimR===S.round).sort((a,b)=>b.elimT-a.elimT||b.hp-a.hp||b.kills-a.kills)[0]||null);
-    S.phase='over';S.overT=9;S.endT=S.time;sfx('win'); log(S.winner?'ผู้ชนะ: '+S.winner.name+(A.length?'':' (ตกเป็นคันสุดท้าย)'):'ไม่มีผู้ชนะ');
+    if(!A.length){endDraw(S.cars.filter(c=>c.elimR===S.round));}   // everybody fell: a draw
+    else{S.winner=A.slice().sort((a,b)=>b.hp-a.hp||b.kills-a.kills)[0];
+    S.phase='over';S.overT=9;S.endT=S.time;sfx('win'); log('ผู้ชนะ: '+S.winner.name);}
   }else startSetup();
 }
 function update(h){
@@ -828,6 +833,16 @@ function drawOver(){
   if(S.phase!=='over')return;
   ctx.fillStyle='rgba(20,17,26,.82)';ctx.fillRect(-TX,-OFF,VW,VH);
   const w=S.winner;
+  if(S.draw){   // draw: nobody wins; show everybody who was tied
+    ftext('เสมอ',AX,380,860,130,'#ffd166','#6b2a3a');ftext('ไม่มีผู้ชนะ',AX,500,860,48,'#f4efe4','#14111a');
+    const L=S.draw,n=L.length;let s=150;const maxCols=Math.max(1,Math.floor(940/s));let cols=maxCols,rows=Math.ceil(n/cols);
+    for(;s>=44;s-=4){cols=Math.floor(940/s);rows=Math.ceil(n/cols);if(rows*(s+34)<=900)break;}
+    const gw=Math.min(n,cols)*s,x0=AX-gw/2,y0=640;
+    L.slice(0,cols*Math.floor(900/(s+34))).forEach((c,i)=>{const cx=x0+s*((i%cols)+.5),cy=y0+(s+34)*Math.floor(i/cols)+s*.5;
+      ctx.save();ctx.translate(cx,cy);drawAvatarDisc(c,s*.4);ctx.beginPath();ctx.arc(0,0,s*.4,0,TAU);ctx.lineWidth=4;ctx.strokeStyle='#fdebc6';ctx.stroke();ctx.restore();
+      if(s>=70)ftext(c.name,cx,cy+s*.4+20,s-6,Math.min(26,s*.24),'#fff6dc','#14111a');});
+    return;
+  }
   ftext(w?(S.flipped?'ล้มกระดานชนะ!':'ผู้ชนะ'):'ไม่มีผู้ชนะ',AX,380,860,120,'#ffd166','#6b2a3a');
   if(!w)return;
   const fr=A.ui.frame,m=fr.meta||{},CY=880,D=470;
