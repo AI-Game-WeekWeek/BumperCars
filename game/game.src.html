@@ -831,6 +831,7 @@ function drawClashBurst(){   // 'ชน!' appears first (phase go), then fades j
 }
 function drawOver(){
   if(S.phase!=='over')return;
+  const restart=()=>ftext('เริ่มเกมใหม่ภายใน '+Math.max(1,Math.ceil(S.overT))+' วินาที',AX,1740,CW-60,46,'#ffd166','#14111a');
   ctx.fillStyle='rgba(20,17,26,.82)';ctx.fillRect(-TX,-OFF,VW,VH);
   const w=S.winner;
   if(S.draw){   // draw: nobody wins; show everybody who was tied
@@ -841,10 +842,10 @@ function drawOver(){
     L.slice(0,cols*Math.floor(900/(s+34))).forEach((c,i)=>{const cx=x0+s*((i%cols)+.5),cy=y0+(s+34)*Math.floor(i/cols)+s*.5;
       ctx.save();ctx.translate(cx,cy);drawAvatarDisc(c,s*.4);ctx.beginPath();ctx.arc(0,0,s*.4,0,TAU);ctx.lineWidth=4;ctx.strokeStyle='#fdebc6';ctx.stroke();ctx.restore();
       if(s>=70)ftext(c.name,cx,cy+s*.4+20,s-6,Math.min(26,s*.24),'#fff6dc','#14111a');});
-    return;
+    restart();return;
   }
   ftext(w?(S.flipped?'ล้มกระดานชนะ!':'ผู้ชนะ'):'ไม่มีผู้ชนะ',AX,380,860,120,'#ffd166','#6b2a3a');
-  if(!w)return;
+  if(!w){restart();return;}
   const fr=A.ui.frame,m=fr.meta||{},CY=880,D=470;
   ctx.save();ctx.translate(AX,CY);
   const rad=(m.hr||0)>0?D*m.hr/m.w:D*.36;drawAvatarDisc(w,rad);
@@ -857,6 +858,7 @@ function drawOver(){
   const sv=Math.max(0,((w.died||S.endT||S.time)-w.born)),mm=Math.floor(sv/60),ss=String(Math.floor(sv%60)).padStart(2,'0');
   ftext('ชนไป '+w.hits+' ครั้ง',AX,1540,820,52,'#f4efe4','#14111a');
   ftext('อยู่รอด '+(mm>0?mm+' นาที '+ss+' วินาที':Math.floor(sv)+' วินาที'),AX,1610,820,52,'#f4efe4','#14111a');
+  restart();
 }
 function draw(){
   fitView();ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#17141d';ctx.fillRect(0,0,PW,PH);ctx.setTransform(K,0,0,K,TX*K,0);   // everything is drawn in 1080x2400 design units, scaled and centred to the real screen
