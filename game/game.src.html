@@ -481,9 +481,9 @@ function sim(h){
 }
 
 /* ===== drawing: 1080x1920 TikTok portrait screen ===== */
-const CW=1080,CH=1920,AX=540,AY=850;      // arena centre on screen
+const CW=1080,CH=1920,AX=540,AY=822;      // arena centre on screen
 let ASC=1.5;                              // game units -> px, set per map so the rim always ends 75 px from the screen edge
-function arenaScale(th){return 246/CFG.R0;}
+function arenaScale(th){return 240/CFG.R0;}
 const cv=$('#cv'),ctx=cv.getContext('2d');cv.width=CW;cv.height=CH;
 const MAPKEY={normal:'fair',th_frog:'frog',th_beetle:'desert',th_pig:'pig',th_cock:'cock',th_bey:'bey'};
 function ld(o){const i=new Image();i.src=o.u;i.meta=o;return i;}
@@ -595,7 +595,7 @@ function drawCountdown(){
   if(S.phase!=='setup')return;
   const n=Math.ceil(S.t),s=String(n),last=S.t<=3;
   drawDigits(s,AX,AY,300,.34);                       // big faint number in the middle of the arena
-  const pulse=last?1+.12*Math.abs(Math.sin(S.t*Math.PI*2)):1,BX=992,BY=462;   // badge top right, beside the how-to strip
+  const pulse=last?1+.12*Math.abs(Math.sin(S.t*Math.PI*2)):1,BX=992,BY=476;   // badge top right, beside the how-to strip
   ctx.save();ctx.translate(BX,BY);ctx.scale(pulse,pulse);
   ctx.beginPath();ctx.arc(0,0,66,0,TAU);ctx.fillStyle=last?'rgba(120,10,30,.7)':'rgba(30,14,48,.66)';ctx.fill();
   ctx.lineWidth=5;ctx.strokeStyle=last?'#ff5470':'#fdebc6';ctx.stroke();ctx.restore();
@@ -653,14 +653,14 @@ function drawCar(c){
 const INK='#5a3340';
 function drawHud(tk){
   const H=A.ui.hud,M=A.map[tk]||A.map.normal;
-  let r=fitBox(H.round_plate,50,203,260,120);
-  if(r)boxText('รอบ '+Math.min(S.round,CFG.rounds)+'/'+CFG.rounds,tbRect(H.round_plate,r,H.round_plate.meta.tb),INK,60);
-  r=fitBox(H.map_banner,300,203,480,120);
+  let r=fitBox(H.round_plate,16,190,320,168);
+  if(r)boxText('รอบ '+Math.min(S.round,CFG.rounds)+'/'+CFG.rounds,tbRect(H.round_plate,r,H.round_plate.meta.tb,.02,.02),INK,92);
+  r=fitBox(H.map_banner,270,190,540,168);
   if(r){const hm=H.map_banner,sx=r[2]/hm.naturalWidth,sy=r[3]/hm.naturalHeight,tb=hm.meta.tb,sk=hm.meta.sock||[tb[0]*.42,hm.naturalHeight/2,hm.naturalHeight*.3],bx=r[0]+sk[0]*sx,by=r[1]+sk[1]*sy,br=sk[2]*sx*.97;
     if(ok(M.badge)){ctx.save();ctx.beginPath();ctx.arc(bx,by,br,0,TAU);ctx.clip();ctx.drawImage(M.badge,bx-br,by-br,br*2,br*2);ctx.restore();}
-    boxText(THEMES[tk].name,tbRect(hm,r,tb),INK,64);}
-  r=fitBox(H.alive_plate,770,203,260,120);
-  if(r)boxText('เหลือ '+aliveCars().length,tbRect(H.alive_plate,r,H.alive_plate.meta.tb),INK,52);
+    boxText(THEMES[tk].name,tbRect(hm,r,tb,.02,.04),INK,84);}
+  r=fitBox(H.alive_plate,744,190,320,168);
+  if(r)boxText('เหลือ '+aliveCars().length,tbRect(H.alive_plate,r,H.alive_plate.meta.tb,.02,.02),INK,84);
 }
 /* gift menu: a panel drawn here (not a picture): title, then 4 gifts per page as  picture + what it does + gift name */
 function glyph(kind,cx,cy,s){   // small vector pictures for the free actions (no gift picture exists for them)
@@ -685,9 +685,10 @@ const LEFTG=[
 const RIGHTG=[
   {g:'th_frog',t:'หนองบึง',n:'Tiny Diny'},{g:'th_beetle',t:'ทะเลทราย',n:'Finger Heart'},{g:'th_pig',t:'ทุ่งหญ้า',n:'G.O.A.T. Busker'},
   {g:'th_cock',t:'ลานไก่ชน',n:'Mishka Bear'},{g:'th_bey',t:'เบเบลด',n:'Hat and Mustache'},
-  {g:'flip',t:'ล้มกระดาน',n:'Boxing Gloves'},{f:'follow',t:'ติดตาม ×2',n:'แชร์ พุ่งเร็ว'}
+  {g:'flip',t:'ล้มกระดาน',n:'Boxing Gloves'}
 ];
-const PNL={y:590,h:522,lx:10,rx:794,w:276,ic:44};
+const FREEG=[{f:'like',t:'กดใจ',n:'ล็อกทิศ'},{f:'follow',t:'ติดตาม',n:'โจมตี ×2'},{f:'share',t:'แชร์',n:'พุ่งเร็วขึ้น'}];
+const PNL={y:632,h:486,lx:10,rx:794,w:276,ic:44};
 let gSize=0;
 function calcGiftSize(){
   if(gSize)return gSize;const tw=PNL.w-22-PNL.ic-12-16;let m=30;
@@ -695,7 +696,7 @@ function calcGiftSize(){
   return gSize=m;
 }
 function drawPanel(items,x,title,sepAfter){
-  const {y,h,w,ic}=PNL,sz=calcGiftSize(),rh=(h-48)/7,top=y+34;
+  const {y,h,w,ic}=PNL,sz=calcGiftSize(),rh=(h-48)/items.length,top=y+34;
   ctx.save();
   ctx.beginPath();ctx.roundRect(x,y,w,h,30);ctx.fillStyle='rgba(38,22,56,.94)';ctx.fill();ctx.lineWidth=6;ctx.strokeStyle='#fdebc6';ctx.stroke();
   ctx.setLineDash([10,8]);ctx.lineWidth=2.5;ctx.strokeStyle='rgba(232,162,174,.8)';ctx.beginPath();ctx.roundRect(x+11,y+11,w-22,h-22,22);ctx.stroke();ctx.setLineDash([]);
@@ -715,12 +716,24 @@ function drawPanel(items,x,title,sepAfter){
   }
   ctx.restore();
 }
-function drawPanels(){drawPanel(LEFTG,PNL.lx,null,0);drawPanel(RIGHTG,PNL.rx,'เปลี่ยนแมพ',5);}
+function drawFreeFrame(){   // like / follow / share: their own frame under the arena
+  const w=480,h=68,x=AX-w/2,y=1070,cw=w/3;
+  ctx.save();
+  ctx.beginPath();ctx.roundRect(x,y,w,h,26);ctx.fillStyle='rgba(38,22,56,.94)';ctx.fill();ctx.lineWidth=5;ctx.strokeStyle='#fdebc6';ctx.stroke();
+  FREEG.forEach((it,i)=>{
+    const cx0=x+i*cw,cy=y+h/2;
+    if(i>0){ctx.setLineDash([6,6]);ctx.lineWidth=2;ctx.strokeStyle='rgba(232,162,174,.7)';ctx.beginPath();ctx.moveTo(cx0,y+12);ctx.lineTo(cx0,y+h-12);ctx.stroke();ctx.setLineDash([]);}
+    ctx.beginPath();ctx.arc(cx0+30,cy,22,0,TAU);ctx.fillStyle='rgba(255,243,207,.2)';ctx.fill();glyph(it.f,cx0+30,cy,38);
+    lt(it.t,cx0+60,cy-9,cw-66,23,'#fff6dc');lt(it.n,cx0+60,cy+14,cw-66,16,'#ffd166');
+  });
+  ctx.restore();
+}
+function drawPanels(){drawPanel(LEFTG,PNL.lx,null,0);drawPanel(RIGHTG,PNL.rx,'เปลี่ยนแมพ',0);drawFreeFrame();}
 const HOWTO=[['เข้าไลฟ์','ได้รถทันที'],['กดใจเพื่อล็อกทิศทาง','ก่อนหมดเวลา 10 วิ'],['ชน!','รถทุกคันพุ่งพร้อมกัน'],['ตกขอบ = ออก','คันสุดท้ายชนะ']];
 function plate(x,y,w,h){ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,h,h*.3);ctx.fillStyle='#fdebc6';ctx.fill();ctx.lineWidth=4;ctx.strokeStyle='#7a3a5a';ctx.stroke();ctx.setLineDash([8,6]);ctx.lineWidth=2.5;ctx.strokeStyle='#e8a2ae';ctx.beginPath();ctx.roundRect(x+7,y+7,w-14,h-14,h*.24);ctx.stroke();ctx.restore();}
 function drawHowto(){
   const hw=A.ui.howto;if(!ok(hw))return;
-  const r=fitBox(hw,60,350,960,208);
+  const r=fitBox(hw,60,364,960,200);
   if(r)HOWTO.forEach((lines,i)=>{const b=tbRect(hw,r,hw.meta.tbs[i],0,0),pw=r[2]/4*.95,ph=66,px=b[0]+b[2]/2-pw/2,py=b[1]-5;plate(px,py,pw,ph);boxText(lines,[px+10,py+9,pw-20,ph-18],INK,26);});
 }
 function drawClashBurst(){
