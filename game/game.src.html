@@ -30,7 +30,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 .chip.clash{border-color:var(--hot);color:var(--hot)}
 .chip.over{border-color:var(--cool);color:var(--cool)}
 .stage{border-radius:14px;overflow:hidden;border:1px solid var(--line);background:var(--bg)}
-canvas{display:block;width:100%;height:auto;aspect-ratio:9/16}
+canvas{display:block;width:100%;height:auto;aspect-ratio:1080/2400}
 .log{margin:0;padding:0;list-style:none;min-height:7.2em;font-size:13px;color:var(--muted)}
 .log li{padding:2px 0;border-bottom:1px dashed var(--line)}
 .log li:first-child{color:var(--fg)}
@@ -63,13 +63,13 @@ ol.flow{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
 
 /* page: portrait stage on the left, test panel on the right; ?stage=1 shows the stage only (for OBS / LIVE Studio) */
 .shell{display:grid;gap:16px;max-width:1180px;margin:0 auto;grid-template-columns:minmax(0,1fr)}
-@media (min-width:900px){.shell{grid-template-columns:minmax(0,calc((100vh - 32px)*9/16)) minmax(0,1fr);align-items:start}.stageCol{position:sticky;top:16px}}
+@media (min-width:900px){.shell{grid-template-columns:minmax(0,calc((100vh - 32px)*1080/2400)) minmax(0,1fr);align-items:start}.stageCol{position:sticky;top:16px}}
 .stageCol .stage{width:100%}
 body.stage-only{padding:0;background:#000}
 body.stage-only .side{display:none}
 body.stage-only .shell{display:block;max-width:none}
 body.stage-only .stageCol{position:static}
-body.stage-only .stage{border:0;border-radius:0;width:min(100vw,calc(100vh*9/16));height:min(100vh,calc(100vw*16/9));margin:0 auto}
+body.stage-only .stage{border:0;border-radius:0;width:min(100vw,calc(100vh*1080/2400));height:min(100vh,calc(100vw*2400/1080));margin:0 auto}
 
 </style>
 <div class="shell">
@@ -255,7 +255,7 @@ const imgs={};
 GIFTS.forEach(g=>{const i=new Image();i.src=g.img;imgs[g.id]=i;});
 
 const S={round:1,phase:'setup',t:CFG.count,clashT:0,R:CFG.R0,Rf:0,Rt:0,shT:0,cars:[],items:[],pending:[],parts:[],winner:null,overT:0,log:[],time:0};
-S.fx=[];function fx(k,x,y,sz){if(S.fx.length>70)return;S.fx.push({k,x,y,l:.5,L:.5,sz});}
+S.fx=[];function fx(k,x,y,sz){sfx(k);if(S.fx.length>70)return;S.fx.push({k,x,y,l:.5,L:.5,sz});}
 const viewers=[]; let nextId=1, amt=1, simT=1, joinT=5;
 let CR=CFG.carR, logDirty=false, whoDirty=false;
 S.votes={};S.theme='normal';S.fr=CFG.friction;S.lastTheme='';
@@ -298,7 +298,7 @@ function mkCar(v){
 }
 function joinViewer(v){
   
-  if(S.phase==='setup'){setCR(aliveCars().length+1);S.cars.push(mkCar(v));separateAll();log(v.name+' เข้าไลฟ์ ได้รถ');}
+  sfx('join');if(S.phase==='setup'){setCR(aliveCars().length+1);S.cars.push(mkCar(v));separateAll();log(v.name+' เข้าไลฟ์ ได้รถ');}
   else{S.pending.push(v);log(v.name+' เข้าไลฟ์ รอรอบหน้า');}
   ensureBots();
   renderWho();
@@ -355,7 +355,7 @@ function hurt(c,dmg,src){
 function flipBoard(c,v){
   if(S.phase==='over')return;
   for(const o of S.cars){if(o!==c&&o.alive){o.alive=false;o.fall=1;o.elimT=S.time;o.elimR=S.round;o.died=S.time;burst(o.x,o.y,o.hue,3);}}
-  S.pending.splice(0);S.winner=c;S.flipped=true;S.phase='over';S.overT=9;S.endT=S.time;
+  S.pending.splice(0);S.winner=c;S.flipped=true;S.phase='over';S.overT=9;S.endT=S.time;sfx('win');
   log(v.name+' ล้มทั้งกระดาน! ชนะคนเดียว');renderWho();
 }
 function giftOk(){return S.phase!=='over';}
@@ -366,6 +366,7 @@ function giveGift(id,gid,n){
   const setupOnly=['gg','tiktok','rose','ice'].includes(gid)||gid.startsWith('th_');
   if(S.phase==='over'){return;}
   if(setupOnly&&S.phase!=='setup'){log(v.name+' ส่ง '+g.name+' ช้าไป รอรอบหน้า');return;}
+  announce(v.name,gid);
   if(gid==='gg'||gid==='tiktok'){
     c.locked=true; c.head+=(gid==='gg'?-1:1)*n*5*DEG; log(v.name+' ส่ง '+g.name+' ×'+n+' หมุน'+(gid==='gg'?'ซ้าย':'ขวา')+' '+n*5+'°');
   }else if(gid==='rose'){c.locked=true;c.lockNearest=true;log(v.name+' ส่งกุหลาบ ล็อกพุ่งชนคันที่ใกล้สุด');}
@@ -391,7 +392,7 @@ function startClash(){
     const sp=CFG.slide*S.R*CFG.friction*c.spd; c.pv={x:Math.cos(c.head)*sp,y:Math.sin(c.head)*sp};
     c.launchIn=c.delay; if(c.delay<=0){c.vx=c.pv.x;c.vy=c.pv.y;}
   }
-  log('ชน!'+(S.theme!=='normal'?' แมพ'+THEMES[S.theme].name:''));
+  sfx('clash');log('ชน!'+(S.theme!=='normal'?' แมพ'+THEMES[S.theme].name:''));
 }
 function collide(a,b){
   const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||.001,min=CR*2;
@@ -440,7 +441,7 @@ function clashStep(h){
   const moving=aliveCars().some(c=>c.launchIn>0||Math.hypot(c.vx,c.vy)>14);
   if((S.clashT>1&&!moving)||S.clashT>CFG.clashMax)beginShrink();
 }
-function beginShrink(){
+function beginShrink(){sfx('cut');
   S.phase='shrink';S.shT=0;S.Rf=S.R;S.Rt=S.round<CFG.rounds?R_of(S.round+1):S.R;
   aliveCars().forEach(c=>{c.vx=c.vy=0;});
   S.R=S.Rt;   // the playable circle is cut at once; what lies outside the red line falls away
@@ -453,7 +454,7 @@ function endRound(){
   const A=aliveCars();
   if(A.length<=1||S.round>=CFG.rounds){
     S.winner=A.length?A.slice().sort((a,b)=>b.hp-a.hp||b.kills-a.kills)[0]:(S.cars.filter(c=>c.elimR===S.round).sort((a,b)=>b.elimT-a.elimT||b.hp-a.hp||b.kills-a.kills)[0]||null);
-    S.phase='over';S.overT=9;S.endT=S.time; log(S.winner?'ผู้ชนะ: '+S.winner.name+(A.length?'':' (ตกเป็นคันสุดท้าย)'):'ไม่มีผู้ชนะ');
+    S.phase='over';S.overT=9;S.endT=S.time;sfx('win'); log(S.winner?'ผู้ชนะ: '+S.winner.name+(A.length?'':' (ตกเป็นคันสุดท้าย)'):'ไม่มีผู้ชนะ');
   }else startSetup();
 }
 function update(h){
@@ -464,7 +465,7 @@ function update(h){
   sim(h);
   if(S.phase==='setup'){
     for(const c of aliveCars()){if(c.bot&&!c.locked&&S.t<c.botT)c.locked=true;if(!c.locked)c.head+=CFG.spin*h;}
-    S.t-=h; if(S.t<=0)startClash();
+    S.t-=h;{const k=Math.ceil(S.t);if(k!==S.lastTick){S.lastTick=k;if(k>=1&&k<=3)sfx(k===1?'tick2':'tick');}}if(S.t<=0)startClash();
   }else if(S.phase==='clash')clashStep(h);
   else if(S.phase==='shrink'){S.shT+=h;if(S.shT>=1.6)endRound();}
   else if(S.phase==='over'){S.overT-=h;if(S.overT<=0)newGame();}
@@ -482,7 +483,8 @@ function sim(h){
 }
 
 /* ===== drawing: 1080x1920 TikTok portrait screen ===== */
-const CW=1080,CH=1920,AX=540,AY=712;      // arena centre on screen
+const CW=1080,CH=2400,OFF=300,AX=540,AY=712;   // 1080x2400 = a 9:20 phone screen; OFF keeps everything below the TikTok top bar
+      // arena centre on screen
 let ASC=1.5;                              // game units -> px, set per map so the rim always ends 75 px from the screen edge
 function arenaScale(th){return 352/CFG.R0;}
 const cv=$('#cv'),ctx=cv.getContext('2d');cv.width=CW;cv.height=CH;
@@ -551,8 +553,9 @@ function drawFloorArt(M,withRim){
 function drawArena(){
   const M=curMap(),R=S.R,R0=CFG.R0,bb=backdropBlur(curSkin,M);
   if(bb)ctx.drawImage(bb,0,0);else cover(M.backdrop);
-  const g=ctx.createRadialGradient(AX,AY,330,AX,AY,1100);g.addColorStop(0,'rgba(8,4,20,0)');g.addColorStop(1,'rgba(8,4,20,.42)');
+  const g=ctx.createRadialGradient(AX,AY+OFF,330,AX,AY+OFF,1250);g.addColorStop(0,'rgba(8,4,20,0)');g.addColorStop(1,'rgba(8,4,20,.42)');
   ctx.fillStyle=g;ctx.fillRect(0,0,CW,CH);
+  ctx.save();ctx.translate(0,OFF);
   const dt=Math.min(.05,Math.max(0,S.time-lastDrawT));lastDrawT=S.time;
   ctx.save();ctx.translate(AX,AY);ctx.scale(ASC,ASC);
   if(S.phase==='shrink'&&!lastShrink&&S.Rf>S.Rt+1){   // the cut: chunks of floor break off along the red line
@@ -585,7 +588,7 @@ function drawArena(){
   ctx.fillStyle=DUST[curSkin]||'#777';
   for(let i=debris.length-1;i>=0;i--){const d=debris[i];d.l-=dt;if(d.l<=0){debris.splice(i,1);continue;}d.vy+=700*dt;d.x+=d.vx*dt;d.y+=d.vy*dt;d.rot+=d.vr*dt;
     ctx.save();ctx.globalAlpha=Math.min(1,d.l*1.6);ctx.translate(d.x,d.y);ctx.rotate(d.rot);ctx.fillRect(-d.sz/2,-d.sz/2,d.sz,d.sz*.7);ctx.strokeStyle='rgba(20,8,24,.7)';ctx.lineWidth=1.5;ctx.strokeRect(-d.sz/2,-d.sz/2,d.sz,d.sz*.7);ctx.restore();}
-  ctx.restore();
+  ctx.restore();ctx.restore();
 }
 function drawDigits(s,cx,cy,hh,alpha){
   const ims=[...s].map(d=>A.ui.digits[+d]);let total=0;ims.forEach(i=>{if(ok(i))total+=i.naturalWidth/i.naturalHeight*hh*.88;});
@@ -706,7 +709,7 @@ function drawPanel(items,x,title,sepAfter,o){
     ctx.beginPath();ctx.arc(ix+ic/2,cy,ic/2+1,0,TAU);ctx.fillStyle='rgba(255,243,207,.2)';ctx.fill();
     if(it.g&&ok(imgs[it.g]))ctx.drawImage(imgs[it.g],ix+2,iy+2,ic-4,ic-4);else if(it.f)glyph(it.f,ix+ic/2,cy,ic*.85);
     const tx=ix+ic+12,tw=w-22-ic-12-16;
-    lt(it.t,tx,cy-11,tw,sz,'#fff6dc');lt(it.n,tx,cy+17,tw,Math.max(15,Math.round(sz*.6)),'#ffd166');
+    lt(it.t,tx,cy-11,tw,sz,'#fff6dc');lt(it.n,tx,cy+16,tw,Math.max(14,Math.round(sz*.55)),'#ffd166');
   });
   if(sepAfter){const sy=top+sepAfter*rh;ctx.setLineDash([8,8]);ctx.lineWidth=2;ctx.strokeStyle='rgba(232,162,174,.7)';ctx.beginPath();ctx.moveTo(x+26,sy);ctx.lineTo(x+w-26,sy);ctx.stroke();ctx.setLineDash([]);}
   if(title){   // heading pill sits on the top border
@@ -717,18 +720,18 @@ function drawPanel(items,x,title,sepAfter,o){
   ctx.restore();
 }
 function drawFreeFrame(){   // like / follow / share: own frame under the map panel
-  const x=PNL.rx,w=PNL.w,y=372,h=156,rh=h/3;
+  const x=PNL.rx,w=PNL.w,y=398,h=128,rh=h/3;
   ctx.save();
   ctx.beginPath();ctx.roundRect(x,y,w,h,26);ctx.fillStyle='rgba(38,22,56,.94)';ctx.fill();ctx.lineWidth=5;ctx.strokeStyle='#fdebc6';ctx.stroke();
   FREEG.forEach((it,i)=>{
     const cy=y+i*rh+rh/2;
     if(i>0){ctx.setLineDash([6,6]);ctx.lineWidth=2;ctx.strokeStyle='rgba(232,162,174,.7)';ctx.beginPath();ctx.moveTo(x+16,y+i*rh);ctx.lineTo(x+w-16,y+i*rh);ctx.stroke();ctx.setLineDash([]);}
     ctx.beginPath();ctx.arc(x+34,cy,20,0,TAU);ctx.fillStyle='rgba(255,243,207,.2)';ctx.fill();glyph(it.f,x+34,cy,34);
-    lt(it.t,x+64,cy-8,w-72,24,'#fff6dc');lt(it.n,x+64,cy+14,w-72,17,'#ffd166');
+    lt(it.t,x+64,cy-7,w-72,22,'#fff6dc');lt(it.n,x+64,cy+12,w-72,15,'#ffd166');
   });
   ctx.restore();
 }
-function drawPanels(){drawPanel(LEFTG,PNL.lx,null,0);drawPanel(RIGHTG,PNL.rx,'ล็อกแมพ',0,{y:76,h:276});drawFreeFrame();}
+function drawPanels(){drawPanel(LEFTG,PNL.lx,null,0);drawPanel(RIGHTG,PNL.rx,'ล็อกแมพ',0,{y:76,h:312});drawFreeFrame();}
 const HOWTO=[['เข้าไลฟ์','ได้รถ'],['กดใจ ล็อกทิศ','ก่อนหมด 10 วิ'],['ชน!','พุ่งพร้อมกัน'],['ตกขอบ = ออก','เหลือคันเดียวชนะ']];
 function plate(x,y,w,h){ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,h,h*.3);ctx.fillStyle='#fdebc6';ctx.fill();ctx.lineWidth=4;ctx.strokeStyle='#7a3a5a';ctx.stroke();ctx.setLineDash([8,6]);ctx.lineWidth=2.5;ctx.strokeStyle='#e8a2ae';ctx.beginPath();ctx.roundRect(x+7,y+7,w-14,h-14,h*.24);ctx.stroke();ctx.restore();}
 function drawHowto(){
@@ -746,7 +749,7 @@ function drawClashBurst(){
 }
 function drawOver(){
   if(S.phase!=='over')return;
-  ctx.fillStyle='rgba(20,17,26,.82)';ctx.fillRect(0,0,CW,CH);
+  ctx.fillStyle='rgba(20,17,26,.82)';ctx.fillRect(0,-OFF,CW,CH);
   const w=S.winner;
   ftext(w?(S.flipped?'ล้มกระดานชนะ!':'ผู้ชนะ'):'ไม่มีผู้ชนะ',AX,380,860,120,'#ffd166','#6b2a3a');
   if(!w)return;
@@ -767,15 +770,87 @@ function draw(){
   ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,CW,CH);ctx.fillStyle='#17141d';ctx.fillRect(0,0,CW,CH);
   const tk=S.phase==='setup'?leadTheme():S.theme;curSkin=tk;ASC=arenaScale(tk);
   ctx.save();if(S.phase==='shrink'&&S.shT<.45){const a=(1-S.shT/.45)*8;ctx.translate((Math.random()-.5)*a*2,(Math.random()-.5)*a*2);}
-  drawArena();drawCountdown();
+  drawArena();ctx.save();ctx.translate(0,OFF);drawCountdown();
   ctx.save();ctx.translate(AX,AY);ctx.scale(ASC,ASC);
   S.items.forEach(drawItem);
   S.cars.slice().sort((a,b)=>a.y-b.y).forEach(drawCar);
   drawFx();
   S.parts.forEach(p=>{ctx.globalAlpha=Math.max(0,p.l*2);ctx.fillStyle='hsl('+p.hue+' 90% 65%)';ctx.fillRect(p.x-2,p.y-2,4,4);});ctx.globalAlpha=1;
-  ctx.restore();ctx.restore();
-  drawHud(tk);drawPanels();drawHowto();drawClashBurst();drawOver();
+  ctx.restore();ctx.restore();ctx.restore();
+  ctx.save();ctx.translate(0,OFF);drawHud(tk);drawPanels();drawHowto();drawClashBurst();drawOver();ctx.restore();
 }
+
+
+/* ================= sound effects (synthesised, no files) and the AI voice that reads each gift ================= */
+const SND={sfx:!/[?&]nosfx=1/.test(location.search),voice:!/[?&]novoice=1/.test(location.search)};
+let AC=null,master=null,lastSfx={};
+function audio(){
+  if(AC)return AC;
+  try{AC=new (window.AudioContext||window.webkitAudioContext)();master=AC.createGain();master.gain.value=.55;master.connect(AC.destination);}catch(e){AC=null;}
+  return AC;
+}
+['pointerdown','keydown','touchstart'].forEach(ev=>addEventListener(ev,()=>{const a=audio();if(a&&a.state==='suspended')a.resume();},{passive:true}));
+function tone(f0,f1,dur,type,vol,delay=0){
+  const a=audio();if(!a)return;const t0=a.currentTime+delay,o=a.createOscillator(),g=a.createGain();
+  o.type=type;o.frequency.setValueAtTime(f0,t0);if(f1!==f0)o.frequency.exponentialRampToValueAtTime(Math.max(20,f1),t0+dur);
+  g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(vol,t0+.012);g.gain.exponentialRampToValueAtTime(.0008,t0+dur);
+  o.connect(g);g.connect(master);o.start(t0);o.stop(t0+dur+.03);
+}
+function noise(dur,vol,fl,fh,delay=0){
+  const a=audio();if(!a)return;const n=Math.floor(a.sampleRate*dur),buf=a.createBuffer(1,n,a.sampleRate),d=buf.getChannelData(0);
+  for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*(1-i/n);
+  const s=a.createBufferSource();s.buffer=buf;const f=a.createBiquadFilter();f.type='bandpass';f.frequency.value=Math.sqrt(fl*fh);f.Q.value=.6;
+  const g=a.createGain();g.gain.value=vol;s.connect(f);f.connect(g);g.connect(master);s.start(a.currentTime+delay);
+}
+const SFX={
+  hit_spark:()=>{noise(.12,.55,300,2400);tone(180,60,.14,'triangle',.5);},
+  poof:()=>{tone(700,140,.5,'sine',.32);noise(.35,.3,200,1800,.05);},
+  shield:()=>{tone(1320,1320,.35,'sine',.3);tone(1980,1980,.25,'sine',.2,.04);},
+  heal:()=>{[523,659,784,1047].forEach((f,i)=>tone(f,f,.22,'sine',.28,i*.07));},
+  ice:()=>{noise(.3,.35,3000,9000);tone(1500,900,.25,'triangle',.22);},
+  speed_lines:()=>{tone(280,1100,.3,'sawtooth',.2);},
+  clash:()=>{noise(.5,.8,60,900);tone(110,45,.5,'sine',.9);tone(330,660,.25,'square',.12,.05);},
+  tick:()=>{tone(880,880,.09,'square',.2);},
+  tick2:()=>{tone(1320,1320,.16,'square',.26);},
+  cut:()=>{noise(1.1,.75,50,500);tone(80,35,1,'sawtooth',.4);noise(.25,.5,1500,6000,.05);},
+  win:()=>{[523,659,784,1047,784,1047,1319].forEach((f,i)=>tone(f,f,.28,'triangle',.4,i*.13));},
+  join:()=>{tone(500,900,.12,'sine',.25);},
+  gift:()=>{tone(880,1320,.12,'sine',.28);tone(1320,1760,.16,'sine',.24,.09);}
+};
+function sfx(k){
+  if(!SND.sfx||!SFX[k])return;const now=performance.now();if(now-(lastSfx[k]||0)<(k==='hit_spark'?70:k==='poof'?90:40))return;lastSfx[k]=now;
+  try{SFX[k]();}catch(e){}
+}
+/* --- AI voice: "คุณ<ชื่อ> <หน้าที่ของขวัญ>" with the browser's Thai speech voice --- */
+const SAY={gg:'หมุนซ้าย',tiktok:'หมุนขวา',rose:'พุ่งชนคันใกล้สุด',love:'โล่กันชน',awesome:'ฮีลเลือด',donut:'กงจักรตีไกล',ice:'แช่แข็งคู่ต่อสู้',flip:'ล้มกระดาน',
+  th_frog:'ล็อกแมพหนองบึง',th_beetle:'ล็อกแมพทะเลทราย',th_pig:'ล็อกแมพทุ่งหญ้า',th_cock:'ล็อกแมพลานไก่ชน',th_bey:'ล็อกแมพเบเบลด'};
+let thVoice=null,voiceQ=0;
+function pickVoice(){
+  if(!('speechSynthesis' in window))return null;
+  const vs=speechSynthesis.getVoices();thVoice=vs.find(v=>/^th/i.test(v.lang))||null;return thVoice;
+}
+if('speechSynthesis' in window){pickVoice();speechSynthesis.addEventListener&&speechSynthesis.addEventListener('voiceschanged',pickVoice);}
+function say(text){
+  if(!SND.voice||!('speechSynthesis' in window))return;
+  if(voiceQ>=3)return;                                    // never fall far behind a burst of gifts
+  const u=new SpeechSynthesisUtterance(text);u.lang='th-TH';if(thVoice||pickVoice())u.voice=thVoice;u.rate=1.08;u.pitch=1.15;u.volume=1;
+  voiceQ++;u.onend=u.onerror=()=>{voiceQ=Math.max(0,voiceQ-1);};
+  try{speechSynthesis.speak(u);}catch(e){voiceQ=Math.max(0,voiceQ-1);}
+}
+function announce(name,gid){
+  sfx('gift');const what=SAY[gid];if(!what)return;
+  say('คุณ'+String(name).replace(/[0-9]+$/,'').trim()+' '+what);
+}
+(function(){
+  const pn=document.querySelector('#play .panel');if(!pn)return;
+  const row=document.createElement('div');row.className='row tools';
+  row.innerHTML='<label><input type="checkbox" id="sfxOn" checked> เสียงเอฟเฟกต์</label><label><input type="checkbox" id="voiceOn" checked> เสียงประกาศ AI</label><button id="voiceTest">ทดสอบเสียง</button>';
+  pn.appendChild(row);
+  document.querySelector('#sfxOn').checked=SND.sfx;document.querySelector('#voiceOn').checked=SND.voice;
+  document.querySelector('#sfxOn').onchange=e=>{SND.sfx=e.target.checked;};
+  document.querySelector('#voiceOn').onchange=e=>{SND.voice=e.target.checked;if(!e.target.checked&&'speechSynthesis' in window)speechSynthesis.cancel();};
+  document.querySelector('#voiceTest').onclick=()=>{const a=audio();if(a&&a.state==='suspended')a.resume();sfx('clash');const hasTh=!!(thVoice||pickVoice());say('คุณพี่ต้น ฮีลเลือด');if(!hasTh)log('เครื่องนี้ไม่มีเสียงภาษาไทย เสียงประกาศอาจไม่ชัด');};
+})();
 
 /* UI */
 let lastH='';
