@@ -1,0 +1,691 @@
+<title>รถบั้มไลฟ์สด</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500&family=Noto+Sans+Thai:wght@400;500;700&display=swap">
+<style>
+
+/* Layout: one column, game board first, controls under it, rules on a second tab. Dark carnival-night look, committed to one theme. */
+:root{
+  --bg:#17141d; --surface:#221e2b; --line:#3b3447; --fg:#f4efe4; --muted:#a99fb6;
+  --bulb:#ffbd2e; --hot:#ff5470; --cool:#37d3bb; --floor:#2b2636;
+  --f-head:'Mitr','Noto Sans Thai',sans-serif; --f-body:'Noto Sans Thai',system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font:14px/1.55 var(--f-body);padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px));padding-block:16px 40px}
+.wrap{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:14px;width:100%}
+h1{font:500 26px/1.2 var(--f-head);margin:0;letter-spacing:.01em}
+h2{font:500 17px/1.3 var(--f-head);margin:0 0 8px}
+.sub{margin:4px 0 0;color:var(--muted);font-size:13px}
+button,select{font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 12px;min-height:40px;cursor:pointer}
+button:hover{border-color:var(--bulb)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--bulb);outline-offset:2px}
+.tabs{display:flex;gap:6px}
+.tabs button{flex:1}
+.tabs button[aria-selected=true]{background:var(--bulb);color:#1d1606;border-color:var(--bulb);font-weight:700}
+.hud{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.hud .round{font:500 18px var(--f-head)}
+.chip{padding:4px 10px;border-radius:99px;background:var(--surface);border:1px solid var(--line);font-size:13px;font-variant-numeric:tabular-nums}
+.chip.setup{border-color:var(--bulb);color:var(--bulb)}
+.chip.clash{border-color:var(--hot);color:var(--hot)}
+.chip.over{border-color:var(--cool);color:var(--cool)}
+.stage{border-radius:14px;overflow:hidden;border:1px solid var(--line);background:var(--bg)}
+canvas{display:block;width:100%;height:auto;aspect-ratio:9/16}
+.log{margin:0;padding:0;list-style:none;min-height:7.2em;font-size:13px;color:var(--muted)}
+.log li{padding:2px 0;border-bottom:1px dashed var(--line)}
+.log li:first-child{color:var(--fg)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.row label{color:var(--muted);font-size:13px}
+.row select{flex:1;min-width:0}
+.amt button{min-width:52px}
+.amt button[aria-pressed=true]{background:var(--hot);border-color:var(--hot);color:#fff}
+.gifts{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.gift{display:flex;gap:8px;align-items:center;text-align:left;padding:6px 8px;height:100%}
+.gift img{width:38px;height:38px;flex:none}
+.gift b{display:block;font-size:13px}
+.gift span{display:block;font-size:11px;line-height:1.35;color:var(--muted)}
+.tools{justify-content:space-between}
+.tools label{display:flex;gap:6px;align-items:center;color:var(--fg)}
+.note{font-size:12px;color:var(--muted);margin:0}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:500;font-size:12px}
+.tag{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11px;border:1px solid var(--line);white-space:nowrap}
+.tag.in{border-color:var(--cool);color:var(--cool)}
+.tag.idea{border-color:var(--bulb);color:var(--bulb)}
+.tag.todo{border-color:var(--hot);color:var(--hot)}
+ol.flow{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px}
+.ask{border-color:var(--bulb)}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+
+/* page: portrait stage on the left, test panel on the right; ?stage=1 shows the stage only (for OBS / LIVE Studio) */
+.shell{display:grid;gap:16px;max-width:1180px;margin:0 auto;grid-template-columns:minmax(0,1fr)}
+@media (min-width:900px){.shell{grid-template-columns:minmax(0,calc((100vh - 32px)*9/16)) minmax(0,1fr);align-items:start}.stageCol{position:sticky;top:16px}}
+.stageCol .stage{width:100%}
+body.stage-only{padding:0;background:#000}
+body.stage-only .side{display:none}
+body.stage-only .shell{display:block;max-width:none}
+body.stage-only .stageCol{position:static}
+body.stage-only .stage{border:0;border-radius:0;width:min(100vw,calc(100vh*9/16));height:min(100vh,calc(100vw*16/9));margin:0 auto}
+
+</style>
+<div class="shell">
+  <div class="stageCol"><div class="stage"><canvas id="cv" aria-label="สนามรถบั้ม"></canvas></div></div>
+  <div class="side wrap">
+    <header>
+      <h1>รถบั้มไลฟ์สด</h1>
+      <p class="sub">ใช้คนดูจำลอง ยังไม่ได้ต่อ TikTok จริง · เปิดด้วย <b>?stage=1</b> ต่อท้ายลิงก์เพื่อแสดงเฉพาะจอเกม (ใส่ใน OBS / LIVE Studio)</p>
+    </header>
+    <nav class="tabs" role="tablist" aria-label="หน้า">
+      <button role="tab" id="tab-play" aria-selected="true" data-tab="play">เล่นทดสอบ</button>
+      <button role="tab" id="tab-rules" aria-selected="false" data-tab="rules">ระบบทั้งหมด</button>
+    </nav>
+<section id="play" role="tabpanel" aria-labelledby="tab-play" class="wrap" style="gap:12px">
+    <div class="hud">
+      <span class="round" id="hRound">รอบ 1/5</span>
+      <span class="chip setup" id="hPhase">นับถอยหลัง 10</span>
+      <span class="chip" id="hTheme">แมพ งานวัด</span>
+      <span class="chip" id="hAlive">เหลือ 0 คัน</span>
+    </div>
+    <ul class="log" id="log" aria-live="polite"></ul>
+
+    <div class="panel">
+      <div class="row">
+        <label for="who">คนดู</label>
+        <select id="who"></select>
+        <button id="join">+ คนเข้าไลฟ์</button><button id="join10">+10</button><button id="join100">+100</button>
+      </div>
+      <div class="row amt" id="amt" role="group" aria-label="จำนวนของขวัญ">
+        <label>จำนวน</label>
+        <button data-n="1" aria-pressed="true">×1</button>
+        <button data-n="5" aria-pressed="false">×5</button>
+        <button data-n="10" aria-pressed="false">×10</button>
+        <button data-n="30" aria-pressed="false">×30</button>
+      </div>
+      <div class="gifts" id="gifts"></div>
+      <div class="row">
+        <button id="like" style="flex:1"><b>ไลก์</b> · ล็อกลูกศร</button>
+        <button id="follow" style="flex:1"><b>ติดตาม</b> · โจมตี ×2 รอบนี้</button>
+        <button id="share" style="flex:1"><b>แชร์</b> · พุ่งเร็วขึ้น ×1.35</button>
+      </div>
+      <div class="row tools">
+        <label><input type="checkbox" id="auto" checked> จำลองคนดูอัตโนมัติ</label>
+        <span class="row"><button id="botTest">ทดสอบบอท</button><button id="skip">ข้ามนับถอยหลัง</button><button id="restart">เริ่มใหม่</button></span>
+      </div>
+      <p class="note">ลูกศรหมุนเองจนกว่าจะกดไลก์ ซึ่งล็อกลูกศรไว้ที่ทิศนั้นตลอดรอบ GG กับ TikTok หมุนทิศทีละ 5° ต่อชิ้นแล้วล็อกให้ด้วย ต่างจากไลก์ที่ล็อกตรงทิศที่ชี้อยู่ เลือกองศาเองไม่ได้ ทั้งหมดใช้ได้เฉพาะช่วงนับถอยหลัง</p>
+    </div>
+  </section>
+
+  
+<section id="rules" role="tabpanel" aria-labelledby="tab-rules" class="wrap" hidden>
+    <div class="card">
+      <h2>ลำดับของหนึ่งรอบ</h2>
+      <ol class="flow">
+        <li><b>เข้าไลฟ์ = ได้รถ</b> ชื่อและรูปโปรไฟล์ขึ้นบนรถ (คนที่เข้ามาระหว่างรอบรอรอบถัดไป) เข้าได้ไม่จำกัดจำนวน รถจะเล็กลงตามจำนวนคนเพื่อให้สนามยังพอ</li>
+        <li><b>แช่แข็ง 10 วินาที</b> รถทุกคันอยู่กับที่ ลูกศรหัวรถหมุนเอง</li>
+        <li><b>ช่วงล็อก</b> คนดูกดไลก์เพื่อล็อกลูกศร หรือส่ง GG/TikTok หมุนไปทิศที่ต้องการ (ล็อกให้ด้วย) ใครไม่ทำอะไรก็เสี่ยงดวงตามลูกศร</li>
+        <li><b>ชน</b> ทุกคันพุ่งไปตามลูกศรพร้อมกัน แล้วไถลหยุดเอง ชนกันเสียเลือด คันที่ตกขอบแพ้ทันที</li>
+        <li><b>วงบีบ</b> สนามเล็กลง ใครอยู่นอกวงตกรอบ แล้วเริ่มรอบใหม่ (รวม 5 รอบ)</li>
+        <li><b>ผู้ชนะ</b> คือคันสุดท้าย หรือคันที่เลือดเหลือมากสุดเมื่อครบรอบที่ 5 ถ้าตกหมดในรอบเดียวกัน คันที่ตกเป็นคันสุดท้ายชนะ (เท่ากันดูเลือด)</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h2>ของขวัญ</h2>
+      <p class="note" style="margin-bottom:8px">หลักการ: ใครชนะก็ได้ แต่ของขวัญต้องช่วยได้จริง ของขวัญเปลี่ยนผลที่ชนได้ แต่ไม่ชนะแทนให้ เพราะการชนยังมีดวง</p>
+      <div class="scroll"><table>
+        <tr><th>ของขวัญ</th><th>ผล</th><th>สถานะ</th></tr>
+        <tr><td>GG</td><td>หมุนซ้าย 5° ต่อชิ้น แล้วล็อกลูกศรให้ทันที ส่งเพิ่มเพื่อปรับทิศต่อได้</td><td><span class="tag in">ใน demo</span></td></tr>
+        <tr><td>TikTok</td><td>หมุนขวา 5° ต่อชิ้น แล้วล็อกลูกศรให้ทันที ส่งเพิ่มเพื่อปรับทิศต่อได้</td><td><span class="tag in">ใน demo</span></td></tr>
+        <tr><td>กุหลาบ</td><td>ล็อกพุ่งชนคันที่ใกล้สุด 1 คัน</td><td><span class="tag in">ใน demo</span></td></tr>
+        <tr><td>โดนัท</td><td>กงจักรรอบรถ ตีไกลขึ้น สูงสุด 3 ชั้น</td><td><span class="tag in">ใน demo</span></td></tr>
+        <tr><td>ไอศกรีม</td><td>คันที่ใกล้สุดออกตัวช้า 1.5 วินาที</td><td><span class="tag in">ใน demo</span></td></tr>
+        <tr><td>Love you so much</td><td>โล่กันการชนได้ 1 ครั้งแล้วแตก (ส่งซ้ำไม่ซ้อน)</td><td><span class="tag in">ใน demo</span></td></tr>
+        <tr><td>You're awesome</td><td>ฮีล +40 ต่อชิ้น</td><td><span class="tag in">ใน demo</span></td></tr>
+        <tr><td>ของขวัญใหญ่ (สิงโต/กาแล็กซี)</td><td>อุกกาบาตถล่มโซนสุ่ม หรือฝนไอเท็ม</td><td><span class="tag idea">เสนอเพิ่ม</span></td></tr>
+        <tr><td>Tiny Diny · แมพหนองบึง</td><td>ของขวัญแมพเปลี่ยนสนามและตัวละครเฉพาะรอบนั้น แมพที่มีจำนวนของขวัญรวมมากสุดชนะ ล็อกก่อนชน 3 วินาที ไม่มีใครส่งก็เป็นงานวัดปกติ หนองบึง: ทุกคนเป็นกบ พื้นโคลนฝืด ไถลสั้น ชนกันน้อยลง ตกขอบยาก (รอบที่เน้นล็อกทิศไปหาคู่ต่อสู้)</td><td><span class="tag in">ใน demo</span></td></tr>
+        <tr><td>Finger Heart · แมพทะเลทราย (กุดจี่/ด้วง)</td><td>ทุกคนเป็นกุดจี่ (ด้วง) พายุทรายพัดทุกคันไปทิศหนึ่งช่วง 2.5 วินาทีแรก (ลายบนพื้นบอกทิศลม) คนที่ล็อกทิศรับลมได้เป็น</td><td><span class="tag in">ใน demo</span></td></tr>
+        <tr><td>G.O.A.T. Busker · แมพทุ่งหญ้าอู๊ดๆ</td><td>ทุกคนเป็นหมู ชนกันแรงขึ้น ×1.5</td><td><span class="tag in">ใน demo</span></td></tr>
+        <tr><td>Mishka Bear · แมพลานไก่ชน</td><td>ทุกคนเป็นไก่ชน ขอบลานเด้งรถกลับ ไม่มีใครตกขอบในรอบนั้น เหลือสู้กันด้วยเลือด</td><td><span class="tag in">ใน demo</span></td></tr>
+        <tr><td>Hat and Mustache · แมพเบเบลด</td><td>ทุกคนเป็นลูกข่าง พื้นลื่น ไถลไกล ตกขอบง่ายขึ้นทุกคัน</td><td><span class="tag in">ใน demo</span></td></tr>
+        <tr><td>ล้มกระดาน</td><td>รถทุกคันตกรอบทันที ผู้ชนะคือคนที่ส่งคนเดียว ส่งได้ทุกช่วงของเกม (ยกเว้นตอนเกมจบแล้ว) เกมจบทันทีและเริ่มเกมใหม่หลังประกาศผล</td><td><span class="tag in">ใน demo</span></td></tr>
+        <tr><td>จักรวาล</td><td>ชุบชีวิตผู้เล่นที่ตกรอบ 1 คน</td><td><span class="tag idea">เสนอเพิ่ม</span></td></tr>
+      </table></div>
+    </div>
+
+    <div class="card">
+      <h2>การกระทำฟรี</h2>
+      <div class="scroll"><table>
+        <tr><th>ทำอะไร</th><th>ผล</th><th>สถานะ</th></tr>
+        <tr><td>ติดตาม</td><td>โจมตี ×2 ในรอบนั้น</td><td><span class="tag in">ใน demo</span></td></tr>
+        <tr><td>แชร์</td><td>พุ่งเร็วขึ้น ×1.35 ในรอบนั้น (ไถลไกลขึ้น เสี่ยงตกขอบด้วย)</td><td><span class="tag in">ใน demo</span></td></tr>
+        <tr><td>ไลก์</td><td>ล็อกลูกศรไว้ที่ทิศนั้นตลอดรอบ กดถูกจังหวะได้ทิศที่ต้องการ</td><td><span class="tag in">ใน demo</span></td></tr>
+      </table></div>
+    </div>
+
+    <div class="card">
+      <h2>ไอเท็มบนสนาม</h2>
+      <p class="note" style="margin-bottom:8px">โผล่ต้นรอบ รถที่ไถลผ่านเก็บได้ คนที่ล็อกทิศไปทางไอเท็มได้เปรียบ</p>
+      <div class="scroll"><table>
+        <tr><th>ไอเท็ม</th><th>ผล</th></tr>
+        <tr><td>ยาความเร็ว</td><td>เร่งความเร็วทันที ×1.6</td></tr>
+        <tr><td>ฮีลเลือด</td><td>+25 เลือด</td></tr>
+        <tr><td>ระยะโจมตี</td><td>กงจักรเพิ่ม 1 ชั้น</td></tr>
+      </table></div>
+    </div>
+
+    <div class="card">
+      <h2>ดวง กับ ของขวัญ (ทำให้ใครก็ชนะได้)</h2>
+      <div class="scroll"><table>
+        <tr><th>กติกา</th><th>เหตุผล</th></tr>
+        <tr><td>ล็อกทิศ ฮีล โล่ ช่วยได้ แต่ฮีลเกินเลือดเต็มไม่ได้ โล่กันได้ครั้งเดียว</td><td>จ่ายมากก็ไม่อมตะ</td></tr>
+        <tr><td>กงจักรสูงสุด 3 ชั้น</td><td>ไม่ใช่ใครเปย์มากสุดก็ครองสนาม</td></tr>
+        <tr><td>คนไม่ให้อะไรยังรอดได้ เพราะลูกศรที่หมุนเองมีโอกาสชี้เข้าสนาม</td><td>คนดูที่เข้ามาเฉยๆ ยังมีลุ้น</td></tr>
+        <tr><td>แชร์ทำให้พุ่งแรง แต่ไถลไกลจนหลุดขอบง่าย</td><td>ของช่วยที่แลกกับความเสี่ยง</td></tr>
+        <tr><td>ผีรถ: คนที่ตกรอบส่งของขวัญปล่อยกับดักได้</td><td>คนดูไม่เลิกให้เมื่อตกรอบ <span class="tag idea">เสนอเพิ่ม</span></td></tr>
+      </table></div>
+    </div>
+
+    <div class="card">
+      <h2>บอทเติมสนาม</h2>
+      <p class="note" style="margin-bottom:8px">ถ้าคนดูจริงน้อยกว่า 3 คน เกมเติมบอทให้ครบ 3 คัน เพื่อให้มีรถชนกันเสมอ บอทใช้รูปและชื่อกวนๆ ล็อกลูกศรเองแบบสุ่ม ไม่ส่งของขวัญ และออกจากสนามทันทีเมื่อคนจริงครบ 3 คน (ปุ่ม "ทดสอบบอท" ในหน้าเล่นเหลือคนจริง 1 คน)</p>
+      <div class="scroll"><table>
+        <tr><th>บอท</th><th>รูป</th></tr>
+        <tr><td>กระต่ายรู้ทัน</td><td>กระต่ายเซลฟี่ "I KNOW!"</td></tr>
+        <tr><td>เหมียวฮู้ด</td><td>แมวใส่ฮู้ด</td></tr>
+        <tr><td>จมูกแตะกล้อง</td><td>จมูกกระต่ายใกล้กล้อง</td></tr>
+        <tr><td>ป๋าแฮมสเตอร์</td><td>แฮมสเตอร์</td></tr>
+        <tr><td>ตะเภาอ้าปากค้าง</td><td>หนูตะเภาตกใจ</td></tr>
+        <tr><td>ตะเภาชมพู</td><td>หนูตะเภาพื้นหลังชมพู</td></tr>
+      </table></div>
+    </div>
+
+    <div class="card">
+      <h2>ต่อกับระบบ TikTok เดิมของคุณ</h2>
+      <div class="scroll"><table>
+        <tr><th>เหตุการณ์</th><th>ใช้ทำอะไร</th><th>สถานะ</th></tr>
+        <tr><td>คนเข้าไลฟ์ (join)</td><td>สร้างรถ ชื่อและรูป</td><td><span class="tag in">ยืนยันแล้ว</span></td></tr>
+        <tr><td>ของขวัญ</td><td>ใช้ตาราง /gifts จับคู่ชื่อของขวัญกับผล</td><td><span class="tag in">ยืนยันแล้ว</span></td></tr>
+        <tr><td>ติดตาม แชร์</td><td>โบนัสของรถคนนั้น ถ้า TikFinity ส่งชื่อมา ไม่งั้นเป็นโบนัสทั้งห้อง</td><td><span class="tag todo">ต้องดูใน /monitor</span></td></tr>
+      </table></div>
+    </div>
+  </section>
+  </div>
+</div>
+<script>
+if(/[?&]stage=1/.test(location.search))document.body.classList.add('stage-only');
+const ASSETS=__ASSETS__;
+
+const IMG=ASSETS.gifts;
+const $=s=>document.querySelector(s);
+const TAU=Math.PI*2, DEG=Math.PI/180;
+const CFG={rounds:5,count:10,R0:270,R1:85,carR:17,clashMax:6,slide:1.1,friction:1.5,spin:2.2,maxCars:20};
+const C={bg:'#17141d',floor:'#2b2636',bulb:'#ffbd2e',hot:'#ff5470',cool:'#37d3bb',fg:'#f4efe4',line:'#3b3447'};
+const NAMES=['พี่ต้น','น้องมิ้นท์','เจ๊หมวย','ลุงแมว','ป้าพลอย','บอลหล่อ','แพรวา','น้องบัว','ตี๋เล็ก','หนูนา','ครูเอ','มายด์','เก่งกาจ','ฟ้าใส','โอ๊ตตี้','ก้อยยี่','นายหมี','เจนจิ','พลอยชมพู','ต้นกล้า','ขวัญใจ','ปุ๊กกี้','แจ็คกี้','มะนาว'];
+const GIFTS=[
+  {id:'gg',name:'GG',img:IMG.gg,desc:'หมุนซ้าย 5° ต่อชิ้น แล้วล็อก'},
+  {id:'tiktok',name:'TikTok',img:IMG.tiktok,desc:'หมุนขวา 5° ต่อชิ้น แล้วล็อก'},
+  {id:'rose',name:'กุหลาบ',img:IMG.rose,desc:'ล็อกพุ่งชนคันที่ใกล้สุด'},
+  {id:'donut',name:'โดนัท',img:IMG.donut,desc:'กงจักรรอบรถ ตีไกลขึ้น'},
+  {id:'ice',name:'ไอศกรีม',img:IMG.ice,desc:'แช่แข็งคันที่ใกล้สุด 1.5 วิ'},
+  {id:'love',name:'Love you',img:IMG.love,desc:'โล่กันการชน 1 ครั้ง'},
+  {id:'awesome',name:"You're awesome",img:IMG.awesome,desc:'ฮีล +40 ต่อชิ้น'}
+];
+const svg=b=>'data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72">'+b+'</svg>');
+const THEMES={
+  normal:{name:'งานวัด',fr:1,floor:'#2b2636'},
+  th_frog:{name:'หนองบึง',fr:2.6,floor:'#1d3a2c'},
+  th_beetle:{name:'ทะเลทราย',fr:1,floor:'#4a3b22'},
+  th_pig:{name:'ทุ่งหญ้าอู๊ดๆ',fr:1,floor:'#2a4025'},
+  th_cock:{name:'ลานไก่ชน',fr:1,floor:'#3b2a22'},
+  th_bey:{name:'เบเบลด',fr:.45,floor:'#22303f'}
+};
+GIFTS.push(
+  {id:'th_frog',name:'Tiny Diny',img:ASSETS.gifts.th_frog,desc:'แมพหนองบึง: ทุกคนเป็นกบ พื้นฝืด ไถลสั้น'},
+  {id:'th_beetle',name:'Finger Heart',img:ASSETS.gifts.th_beetle,desc:'แมพทะเลทราย: ทุกคนเป็นกุดจี่ พายุทรายพัด'},
+  {id:'th_pig',name:'G.O.A.T. Busker',img:ASSETS.gifts.th_pig,desc:'แมพทุ่งหญ้าอู๊ดๆ: ทุกคนเป็นหมู ชนแรง ×1.5'},
+  {id:'th_cock',name:'Mishka Bear',img:ASSETS.gifts.th_cock,desc:'แมพลานไก่ชน: ขอบเด้ง ไม่มีใครตกขอบ'},
+  {id:'th_bey',name:'Hat and Mustache',img:ASSETS.gifts.th_bey,desc:'แมพเบเบลด: ทุกคนเป็นลูกข่าง พื้นลื่น'}
+);
+GIFTS.push({id:'flip',name:'ล้มกระดาน',img:svg('<g transform="rotate(-25 36 40)"><rect x="12" y="30" width="48" height="10" rx="3" fill="#8a5a38"/><rect x="18" y="40" width="5" height="18" fill="#6b4328"/><rect x="49" y="40" width="5" height="18" fill="#6b4328"/></g><circle cx="52" cy="14" r="5" fill="#ff5470"/><circle cx="22" cy="12" r="4" fill="#ffbd2e"/><circle cx="62" cy="30" r="3" fill="#37d3bb"/>'),desc:'ทุกคนตกรอบ ผู้ชนะคือคนส่งคนเดียว'});
+const imgs={};
+GIFTS.forEach(g=>{const i=new Image();i.src=g.img;imgs[g.id]=i;});
+
+const S={round:1,phase:'setup',t:CFG.count,clashT:0,R:CFG.R0,Rf:0,Rt:0,shT:0,cars:[],items:[],pending:[],parts:[],winner:null,overT:0,log:[],time:0};
+S.fx=[];function fx(k,x,y,sz){if(S.fx.length>70)return;S.fx.push({k,x,y,l:.5,L:.5,sz});}
+const viewers=[]; let nextId=1, amt=1, simT=1, joinT=5;
+let CR=CFG.carR, logDirty=false, whoDirty=false;
+S.votes={};S.theme='normal';S.fr=CFG.friction;S.lastTheme='';
+function leadTheme(){let best='normal',bv=0;for(const k in S.votes){const v=S.votes[k];if(v>bv||(v===bv&&v>0&&k===S.lastTheme)){best=k;bv=v;}}return best;}
+function setCR(n){CR=Math.max(3,Math.min(CFG.carR,160/Math.sqrt(Math.max(1,n))));}
+
+function R_of(r){return CFG.R0+(CFG.R1-CFG.R0)*(r-1)/(CFG.rounds-1);}
+function initial(n){const m=n.match(/[ก-ฮA-Za-z0-9]/);return m?m[0]:'?';}
+function aliveCars(){return S.cars.filter(c=>c.alive);}
+const esc=s=>String(s).replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+function log(m){S.log.unshift(m);if(S.log.length>6)S.log.pop();logDirty=true;}
+
+const mkImg=u=>{const i=new Image();i.src=u;return i;};
+const BOTS=[
+  {name:'กระต่ายรู้ทัน',img:mkImg(ASSETS.bots[0])},
+  {name:'เหมียวฮู้ด',img:mkImg(ASSETS.bots[1])},
+  {name:'จมูกแตะกล้อง',img:mkImg(ASSETS.bots[2])},
+  {name:'ป๋าแฮมสเตอร์',img:mkImg(ASSETS.bots[3])},
+  {name:'ตะเภาอ้าปากค้าง',img:mkImg(ASSETS.bots[4])},
+  {name:'ตะเภาชมพู',img:mkImg(ASSETS.bots[5])}
+];
+function ensureBots(addCars=true){
+  const humans=viewers.filter(v=>!v.bot).length,need=Math.max(0,3-humans);
+  const bs=viewers.filter(v=>v.bot);
+  while(bs.length>need){const b=bs.pop();viewers.splice(viewers.indexOf(b),1);const i=S.cars.findIndex(c=>c.id===b.id);if(i>=0)S.cars.splice(i,1);}
+  while(bs.length<need){
+    const used=new Set(bs.map(b=>b.name)),cand=BOTS.filter(x=>!used.has(x.name)),d=cand[Math.floor(Math.random()*cand.length)];
+    const v={id:nextId++,name:d.name,hue:Math.floor(Math.random()*360),ini:initial(d.name),bot:true,img:d.img};
+    viewers.push(v);bs.push(v);
+    if(addCars&&S.phase==='setup')S.cars.push(mkCar(v));
+  }
+}
+function newViewer(){
+  let name=NAMES[(nextId-1)%NAMES.length]; if(nextId>NAMES.length) name+=' '+Math.ceil(nextId/NAMES.length);
+  const v={id:nextId++,name,hue:Math.floor(Math.random()*360)}; v.ini=initial(name); viewers.push(v); return v;
+}
+function mkCar(v){
+  let x=0,y=0;
+  for(let i=0;i<(S.cars.length>150?3:40);i++){const a=Math.random()*TAU, r=Math.sqrt(Math.random())*(S.R-CR*2); x=Math.cos(a)*r; y=Math.sin(a)*r;
+    if(S.cars.every(c=>!c.alive||Math.hypot(c.x-x,c.y-y)>CR*2.6))break;}
+  return {id:v.id,name:v.name,hue:v.hue,ini:v.ini,img:v.img,bot:!!v.bot,botT:v.bot?1+Math.random()*7:0,x,y,vx:0,vy:0,hp:100,alive:true,fall:0,head:Math.random()*TAU,locked:false,lockNearest:false,atk:1,spd:1,gear:0,shield:0,delay:0,launchIn:0,pv:null,cd:{},flash:0,kills:0};
+}
+function joinViewer(v){
+  
+  if(S.phase==='setup'){setCR(aliveCars().length+1);S.cars.push(mkCar(v));log(v.name+' เข้าไลฟ์ ได้รถ');}
+  else{S.pending.push(v);log(v.name+' เข้าไลฟ์ รอรอบหน้า');}
+  ensureBots();
+  renderWho();
+}
+function spawnItems(){
+  S.items=[]; const n=Math.min(40,Math.max(3,Math.round(aliveCars().length*0.4)));
+  const types=['speed','heal','range'];
+  for(let i=0;i<n;i++){const a=Math.random()*TAU,r=Math.sqrt(Math.random())*(S.R-35);S.items.push({x:Math.cos(a)*r,y:Math.sin(a)*r,type:types[Math.floor(Math.random()*3)]});}
+}
+function newGame(){
+  S.votes={};S.theme='normal';S.fr=CFG.friction;S.lastTheme='';S.flipped=false;S.windA=Math.random()*TAU;S.round=1;S.R=CFG.R0;S.cars=[];S.items=[];S.parts=[];S.winner=null;S.phase='setup';S.t=CFG.count;
+  S.pending=[];S.fx=[];
+  ensureBots(false);setCR(viewers.length);viewers.forEach(v=>S.cars.push(mkCar(v)));
+  spawnItems(); log('เริ่มเกมใหม่'); renderWho();
+}
+function startSetup(){
+  S.round++;S.windA=Math.random()*TAU;S.votes={};S.theme='normal';S.fr=CFG.friction;S.lastTheme='';
+  S.cars.forEach(c=>{if(c.alive){c.locked=false;c.lockNearest=false;c.atk=1;c.spd=1;c.delay=0;c.launchIn=0;c.vx=c.vy=0;c.cd={};if(c.bot)c.botT=1+Math.random()*7;}});
+  setCR(aliveCars().length+S.pending.length);S.pending.splice(0).forEach(v=>S.cars.push(mkCar(v)));
+  S.phase='setup';S.t=CFG.count;ensureBots();spawnItems();renderWho();log('รอบ '+S.round+' เริ่ม แช่แข็งแล้วล็อกทิศทาง');
+}
+function nearestEnemy(c){let b=null,bd=1e9;for(const o of aliveCars()){if(o===c)continue;const d=Math.hypot(o.x-c.x,o.y-c.y);if(d<bd){bd=d;b=o;}}return b;}
+function burst(x,y,hue,n=10){if(S.parts.length>300)return;for(let i=0;i<n;i++){const a=Math.random()*TAU,s=60+Math.random()*140;S.parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,l:.5,hue});}}
+function eliminate(c,why,src){
+  if(!c.alive)return; c.alive=false;c.fall=1;c.elimT=S.time;c.elimR=S.round; burst(c.x,c.y,c.hue,14);fx('poof',c.x,c.y,CR*4);
+  if(src&&src!==c)src.kills++;
+  log(c.name+' '+why+(src&&src!==c?' (โดย '+src.name+')':''));renderWho();
+}
+function hurt(c,dmg,src){
+  if(!c.alive)return; if(c.shield>0&&dmg>=1){c.shield=0;dmg=0;burst(c.x,c.y,160,6);fx('shield',c.x,c.y,CR*3.2);log(c.name+' โล่แตก กันการชนได้ 1 ครั้ง');}
+  c.hp-=dmg;c.flash=.18; if(c.hp<=0){c.hp=0;eliminate(c,'เลือดหมด',src);}
+}
+
+function flipBoard(c,v){
+  if(S.phase==='over')return;
+  for(const o of S.cars){if(o!==c&&o.alive){o.alive=false;o.fall=1;o.elimT=S.time;o.elimR=S.round;burst(o.x,o.y,o.hue,3);}}
+  S.pending.splice(0);S.winner=c;S.flipped=true;S.phase='over';S.overT=9;
+  log(v.name+' ล้มทั้งกระดาน! ชนะคนเดียว');renderWho();
+}
+function giftOk(){return S.phase!=='over';}
+function giveGift(id,gid,n){
+  const c=S.cars.find(x=>x.id===id); const v=viewers.find(x=>x.id===id); const g=GIFTS.find(x=>x.id===gid);
+  if(!v||!g)return;
+  if(!c||!c.alive){log(v.name+' ส่ง '+g.name+' แต่ตกรอบแล้ว');return;}
+  const setupOnly=['gg','tiktok','rose','ice'].includes(gid)||gid.startsWith('th_');
+  if(S.phase==='over'){return;}
+  if(setupOnly&&S.phase!=='setup'){log(v.name+' ส่ง '+g.name+' ช้าไป รอรอบหน้า');return;}
+  if(gid==='gg'||gid==='tiktok'){
+    c.locked=true; c.head+=(gid==='gg'?-1:1)*n*5*DEG; log(v.name+' ส่ง '+g.name+' ×'+n+' หมุน'+(gid==='gg'?'ซ้าย':'ขวา')+' '+n*5+'°');
+  }else if(gid==='rose'){c.locked=true;c.lockNearest=true;log(v.name+' ส่งกุหลาบ ล็อกพุ่งชนคันที่ใกล้สุด');}
+  else if(gid==='donut'){c.gear=Math.min(3,c.gear+n);log(v.name+' ส่งโดนัท กงจักร '+c.gear+' ชั้น');}
+  else if(gid==='ice'){const e=nearestEnemy(c);if(e){fx('ice',e.x,e.y,CR*3);e.delay=Math.min(3,e.delay+1.5*n);log(v.name+' แช่แข็ง '+e.name+' '+e.delay.toFixed(1)+' วิ');}}
+  else if(gid==='love'){c.shield=1;log(v.name+' ได้โล่ กันชน 1 ครั้ง');}
+  else if(gid==='awesome'){fx('heal',c.x,c.y,CR*2.8);c.hp=Math.min(100,c.hp+40*n);log(v.name+' ฮีลเป็น '+Math.round(c.hp));}
+  else if(gid==='flip'){flipBoard(c,v);}
+  else if(gid.startsWith('th_')){
+    if(S.t<=3){log(v.name+' ส่ง '+g.name+' ช้าไป แมพล็อกแล้ว');return;}
+    S.votes[gid]=(S.votes[gid]||0)+n;S.lastTheme=gid;log(v.name+' ส่ง '+g.name+' ×'+n+' โหวตแมพ'+THEMES[gid].name+' ('+S.votes[gid]+')');
+  }
+}
+function doFollow(id){const c=S.cars.find(x=>x.id===id&&x.alive),v=viewers.find(x=>x.id===id);if(!c||S.phase!=='setup'){return;}c.atk=2;log(v.name+' กดติดตาม โจมตี ×2 รอบนี้');}
+function doShare(id){const c=S.cars.find(x=>x.id===id&&x.alive),v=viewers.find(x=>x.id===id);if(!c||S.phase!=='setup'){return;}c.spd=1.35;log(v.name+' กดแชร์ พุ่งเร็วขึ้น');}
+
+function doLike(id){const c=S.cars.find(x=>x.id===id&&x.alive),v=viewers.find(x=>x.id===id);if(!c||S.phase!=='setup')return;if(c.locked)return;c.locked=true;log(v.name+' ไลก์ ล็อกลูกศรที่ '+Math.round(((c.head/DEG)%360+360)%360)+'°');}
+function startClash(){
+  S.phase='clash';S.clashT=0;S.theme=leadTheme();S.fr=CFG.friction*THEMES[S.theme].fr;
+  for(const c of aliveCars()){
+    if(c.lockNearest){const e=nearestEnemy(c);if(e)c.head=Math.atan2(e.y-c.y,e.x-c.x);}
+    const sp=CFG.slide*S.R*CFG.friction*c.spd; c.pv={x:Math.cos(c.head)*sp,y:Math.sin(c.head)*sp};
+    c.launchIn=c.delay; if(c.delay<=0){c.vx=c.pv.x;c.vy=c.pv.y;}
+  }
+  log('ชน!'+(S.theme!=='normal'?' แมพ'+THEMES[S.theme].name:''));
+}
+function collide(a,b){
+  const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||.001,min=CR*2;
+  if(d<min){
+    const nx=dx/d,ny=dy/d,ov=(min-d)/2; a.x-=nx*ov;a.y-=ny*ov;b.x+=nx*ov;b.y+=ny*ov;
+    const rv=(b.vx-a.vx)*nx+(b.vy-a.vy)*ny;
+    if(rv<0){
+      const sa=Math.hypot(a.vx,a.vy),sb=Math.hypot(b.vx,b.vy),j=-(1+.9)*rv/2;
+      a.vx-=j*nx;a.vy-=j*ny;b.vx+=j*nx;b.vy+=j*ny;
+      const tot=sa+sb+1,imp=Math.abs(rv)*0.045*(S.theme==='th_pig'?1.5:1);
+      hurt(b,imp*a.atk*(sa/tot)*2,a);hurt(a,imp*b.atk*(sb/tot)*2,b);
+      burst((a.x+b.x)/2,(a.y+b.y)/2,50,4);fx('hit_spark',(a.x+b.x)/2,(a.y+b.y)/2,CR*3);
+    }
+  }
+}
+function ringHit(a,b){
+  if(a.gear<=0||!a.alive||!b.alive)return;
+  const d=Math.hypot(b.x-a.x,b.y-a.y),ringR=CR+12*a.gear*CR/CFG.carR;
+  if(d<ringR+CR&&(a.cd[b.id]||0)<=0){
+    a.cd[b.id]=.35; const nx=(b.x-a.x)/(d||1),ny=(b.y-a.y)/(d||1);
+    b.vx+=nx*140;b.vy+=ny*140; hurt(b,9*a.atk*(1+.3*a.gear),a); burst(b.x,b.y,40,3);
+  }
+}
+function clashStep(h){
+  S.clashT+=h; const A=aliveCars();
+  for(const c of A){
+    if(c.launchIn>0){c.launchIn-=h;if(c.launchIn<=0){c.vx+=c.pv.x;c.vy+=c.pv.y;}}
+    if(S.theme==='th_beetle'&&S.clashT<2.5){c.vx+=Math.cos(S.windA)*60*h;c.vy+=Math.sin(S.windA)*60*h;}
+    c.x+=c.vx*h;c.y+=c.vy*h;const f=Math.exp(-S.fr*h);c.vx*=f;c.vy*=f;
+    for(const k in c.cd)c.cd[k]-=h;
+    for(let i=S.items.length-1;i>=0;i--){const it=S.items[i];
+      if(Math.hypot(it.x-c.x,it.y-c.y)<CR+10){
+        if(it.type==='speed'){fx('speed_lines',c.x,c.y,CR*3.4);c.vx*=1.6;c.vy*=1.6;log(c.name+' ได้ยาความเร็ว');}
+        else if(it.type==='heal'){fx('heal',c.x,c.y,CR*2.8);c.hp=Math.min(100,c.hp+25);log(c.name+' ได้ฮีล +25');}
+        else{c.gear=Math.min(3,c.gear+1);log(c.name+' ได้ระยะโจมตี');}
+        S.items.splice(i,1);}}
+    const dd=Math.hypot(c.x,c.y);
+    if(S.theme==='th_cock'&&dd>S.R-CR){const nx=c.x/dd,ny=c.y/dd;c.x=nx*(S.R-CR);c.y=ny*(S.R-CR);const vn=c.vx*nx+c.vy*ny;if(vn>0){c.vx-=1.8*vn*nx;c.vy-=1.8*vn*ny;}}
+    else if(dd>S.R+CR*.5)eliminate(c,'ตกขอบ');
+  }
+  const L=aliveCars();
+  const cs=CR*4.4,grid=new Map();
+  for(let i=0;i<L.length;i++){const c=L[i];c.gi=i;const k=(Math.floor(c.x/cs)+500)*1000+Math.floor(c.y/cs)+500;let a=grid.get(k);if(!a)grid.set(k,a=[]);a.push(c);}
+  for(const c of L){if(!c.alive)continue;const ix=Math.floor(c.x/cs)+500,iy=Math.floor(c.y/cs)+500;
+    for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++){const a=grid.get((ix+dx)*1000+iy+dy);if(!a)continue;for(const o of a){if(o.gi<=c.gi||!o.alive||!c.alive)continue;collide(c,o);ringHit(c,o);ringHit(o,c);}}}
+  const moving=aliveCars().some(c=>c.launchIn>0||Math.hypot(c.vx,c.vy)>14);
+  if((S.clashT>1&&!moving)||S.clashT>CFG.clashMax)beginShrink();
+}
+function beginShrink(){
+  S.phase='shrink';S.shT=0;S.Rf=S.R;S.Rt=S.round<CFG.rounds?R_of(S.round+1):S.R;
+  aliveCars().forEach(c=>{c.vx=c.vy=0;});
+}
+function endRound(){
+  S.R=S.Rt;
+  for(const c of aliveCars()){if(Math.hypot(c.x,c.y)>S.R+CR*.3)eliminate(c,'หลุดวงที่บีบ');}
+  const A=aliveCars();
+  if(A.length<=1||S.round>=CFG.rounds){
+    S.winner=A.length?A.slice().sort((a,b)=>b.hp-a.hp||b.kills-a.kills)[0]:(S.cars.filter(c=>c.elimR===S.round).sort((a,b)=>b.elimT-a.elimT||b.hp-a.hp||b.kills-a.kills)[0]||null);
+    S.phase='over';S.overT=9; log(S.winner?'ผู้ชนะ: '+S.winner.name+(A.length?'':' (ตกเป็นคันสุดท้าย)'):'ไม่มีผู้ชนะ');
+  }else startSetup();
+}
+function update(h){
+  S.time+=h;
+  for(let i=S.parts.length-1;i>=0;i--){const p=S.parts[i];p.x+=p.vx*h;p.y+=p.vy*h;p.l-=h;if(p.l<=0)S.parts.splice(i,1);}
+  for(let i=S.fx.length-1;i>=0;i--){S.fx[i].l-=h;if(S.fx[i].l<=0)S.fx.splice(i,1);}
+  for(const c of S.cars){c.flash=Math.max(0,c.flash-h);if(!c.alive&&c.fall>0)c.fall=Math.max(0,c.fall-h*2);}
+  sim(h);
+  if(S.phase==='setup'){
+    for(const c of aliveCars()){if(c.bot&&!c.locked&&S.t<c.botT)c.locked=true;if(!c.locked)c.head+=CFG.spin*h;}
+    S.t-=h; if(S.t<=0)startClash();
+  }else if(S.phase==='clash')clashStep(h);
+  else if(S.phase==='shrink'){S.shT+=h;S.R=S.Rf+(S.Rt-S.Rf)*Math.min(1,S.shT/1.4);if(S.shT>=1.6)endRound();}
+  else if(S.phase==='over'){S.overT-=h;if(S.overT<=0)newGame();}
+}
+/* mock viewers */
+function sim(h){
+  if(!$('#auto').checked)return;
+  joinT-=h; if(joinT<=0){joinT=6+Math.random()*5;if(viewers.length<18)joinViewer(newViewer());}
+  if(S.phase==='over')return;
+  simT-=h; if(simT>0)return; simT=.5+Math.random()*.8;
+  const A=aliveCars().filter(c=>!c.bot); if(!A.length)return; const c=A[Math.floor(Math.random()*A.length)];
+  const pool=['gg','gg','gg','tiktok','tiktok','tiktok','rose','donut','ice','love','awesome','follow','share','like','like','like','like','th_frog','th_beetle','th_pig','th_cock','th_bey'];
+  const k=pool[Math.floor(Math.random()*pool.length)], n=[1,1,2,5][Math.floor(Math.random()*4)];
+  if(k==='follow')doFollow(c.id);else if(k==='share')doShare(c.id);else if(k==='like')doLike(c.id);else giveGift(c.id,k,n);
+}
+
+/* ===== drawing: 1080x1920 TikTok portrait screen ===== */
+const CW=1080,CH=1920,AX=510,AY=800,ASC=880/540;      // arena centre on screen, game units -> px
+const cv=$('#cv'),ctx=cv.getContext('2d');cv.width=CW;cv.height=CH;
+const MAPKEY={normal:'fair',th_frog:'frog',th_beetle:'desert',th_pig:'pig',th_cock:'cock',th_bey:'bey'};
+function ld(o){const i=new Image();i.src=o.u;i.meta=o;return i;}
+const A={map:{},ui:{}};
+for(const th in MAPKEY){const m=ASSETS.maps[MAPKEY[th]];
+  A.map[th]={floor:ld(m.floor),rim:m.rim?ld(m.rim):null,badge:ld(m.badge),backdrop:ld(m.backdrop),cars:m.cars.map(ld)};}
+const U=ASSETS.ui;
+A.ui={digits:U.digits.map(ld),items:{},effects:{},badges:{},callouts:{},hud:{},cats:{},howto:ld(U.howto),frame:ld(U.avatar_frame)};
+for(const g of ['items','effects','badges','callouts','hud','cats'])for(const k in U[g])A.ui[g][k]=ld(U[g][k]);
+const ok=i=>i&&i.complete&&i.naturalWidth>0;
+function imgC(i,cx,cy,w,h){if(ok(i))ctx.drawImage(i,cx-w/2,cy-h/2,w,h);}
+function fitBox(i,x,y,w,h){
+  if(!ok(i))return null;const s=Math.min(w/i.naturalWidth,h/i.naturalHeight),dw=i.naturalWidth*s,dh=i.naturalHeight*s,dx=x+(w-dw)/2,dy=y+(h-dh)/2;
+  ctx.drawImage(i,dx,dy,dw,dh);return [dx,dy,dw,dh];
+}
+function cover(i){if(!ok(i))return;const s=Math.max(CW/i.naturalWidth,CH/i.naturalHeight),w=i.naturalWidth*s,h=i.naturalHeight*s;ctx.drawImage(i,(CW-w)/2,(CH-h)/2,w,h);}
+const FONT='Mitr,"Noto Sans Thai",sans-serif';
+function ftext(t,cx,cy,maxW,size,fill,stroke){
+  let s=size;const f=()=>'500 '+s+'px '+FONT;ctx.font=f();
+  while(ctx.measureText(t).width>maxW&&s>9){s--;ctx.font=f();}
+  ctx.textAlign='center';ctx.textBaseline='alphabetic';
+  const m=ctx.measureText('อ'),y=cy+(m.actualBoundingBoxAscent-m.actualBoundingBoxDescent)/2;
+  if(stroke){ctx.lineJoin='round';ctx.lineWidth=Math.max(3,s/7);ctx.strokeStyle=stroke;ctx.strokeText(t,cx,y);}
+  ctx.fillStyle=fill;ctx.fillText(t,cx,y);
+}
+/* text area of a frame: tb is measured on the picture by the build script, r is where the picture was drawn */
+function tbRect(i,r,tb){const sx=r[2]/i.naturalWidth,sy=r[3]/i.naturalHeight;return [r[0]+tb[0]*sx,r[1]+tb[1]*sy,tb[2]*sx,tb[3]*sy];}
+function boxText(lines,b,fill,maxSize,stroke){
+  if(!Array.isArray(lines))lines=[lines];const n=lines.length;let s=Math.min(maxSize,b[3]/n/1.12);
+  const fits=()=>{ctx.font='500 '+s+'px '+FONT;return lines.every(l=>ctx.measureText(l).width<=b[2]*.97);};
+  while(!fits()&&s>8)s-=1;
+  const lh=Math.min(b[3]/n,s*1.18),y0=b[1]+b[3]/2-(n-1)*lh/2;
+  lines.forEach((l,k)=>ftext(l,b[0]+b[2]/2,y0+k*lh,b[2]*.97,s,fill,stroke));
+}
+let curSkin='normal';
+function curMap(){return A.map[curSkin]||A.map.normal;}
+
+/* ---- arena ---- */
+function drawArena(){
+  const M=curMap();cover(M.backdrop);
+  ctx.save();ctx.translate(AX,AY);ctx.scale(ASC,ASC);
+  const R=S.R;
+  if(ok(M.floor))ctx.drawImage(M.floor,-R,-R,2*R,2*R);else{ctx.fillStyle='#2b2636';ctx.beginPath();ctx.arc(0,0,R,0,TAU);ctx.fill();}
+  if(curSkin==='th_beetle'){   // sand storm direction shown on the floor
+    ctx.save();ctx.beginPath();ctx.arc(0,0,R,0,TAU);ctx.clip();ctx.strokeStyle='rgba(255,240,200,.45)';ctx.lineWidth=3;ctx.lineCap='round';
+    const ca=Math.cos(S.windA),sa=Math.sin(S.windA);
+    for(let i=0;i<12;i++){const a=i*2.399,r=Math.sqrt((i+.5)/12)*(R-30),x=Math.cos(a)*r,y=Math.sin(a)*r;ctx.beginPath();ctx.moveTo(x-ca*18,y-sa*18);ctx.lineTo(x+ca*18,y+sa*18);ctx.moveTo(x+ca*18,y+sa*18);ctx.lineTo(x+ca*8-sa*6,y+sa*8+ca*6);ctx.moveTo(x+ca*18,y+sa*18);ctx.lineTo(x+ca*8+sa*6,y+sa*8-ca*6);ctx.stroke();}
+    ctx.restore();
+  }
+  if(S.phase==='setup'&&S.round<CFG.rounds){ctx.save();ctx.setLineDash([6,8]);ctx.strokeStyle='rgba(255,84,112,.6)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,R_of(S.round+1),0,TAU);ctx.stroke();ctx.restore();}
+  if(M.rim&&ok(M.rim)){const inner=M.rim.meta.inner||.9,w=2*R/inner,h=w*M.rim.naturalHeight/M.rim.naturalWidth;ctx.drawImage(M.rim,-w/2,-h/2,w,h);}
+  else{ // fair: ring of bulbs
+    ctx.strokeStyle='#5a4a7a';ctx.lineWidth=16;ctx.beginPath();ctx.arc(0,0,R+8,0,TAU);ctx.stroke();
+    const nb=Math.max(16,Math.round(R/4.5));
+    for(let i=0;i<nb;i++){const a=i/nb*TAU,on=(i+Math.floor(S.time*4))%2===0;ctx.fillStyle=on?'#ffe08a':'#b78b2a';ctx.beginPath();ctx.arc(Math.cos(a)*(R+8),Math.sin(a)*(R+8),4.2,0,TAU);ctx.fill();}
+  }
+  ctx.restore();
+}
+function drawCountdown(){
+  if(S.phase!=='setup')return;const s=String(Math.ceil(S.t)),hh=380,ims=[...s].map(d=>A.ui.digits[+d]);
+  let total=0;ims.forEach(i=>{if(ok(i))total+=i.naturalWidth/i.naturalHeight*hh*.9;});
+  ctx.save();ctx.globalAlpha=.34;let x=AX-total/2;
+  ims.forEach(i=>{if(!ok(i))return;const w=i.naturalWidth/i.naturalHeight*hh;ctx.drawImage(i,x,AY-hh/2,w,hh);x+=w*.9;});
+  ctx.restore();
+}
+
+/* ---- things inside the arena (game units) ---- */
+function drawItem(it){const i=A.ui.items[it.type];if(ok(i))imgC(i,it.x,it.y,36,36*i.naturalHeight/i.naturalWidth);}
+function drawFx(){
+  for(const f of S.fx){const i=A.ui.effects[f.k];if(!ok(i))continue;const p=1-f.l/f.L,sc=.7+.5*Math.min(1,p*3),w=f.sz*sc,h=w*i.naturalHeight/i.naturalWidth;
+    ctx.save();ctx.globalAlpha=Math.max(0,Math.min(1,f.l/f.L*1.6));imgC(i,f.x,f.y-p*6,w,h);ctx.restore();}
+}
+function drawAvatarDisc(c,rad){
+  const im=c.img;
+  if(im&&im.complete&&im.naturalWidth){
+    ctx.save();ctx.beginPath();ctx.arc(0,0,rad,0,TAU);ctx.clip();
+    const s=Math.max(2*rad/im.naturalWidth,2*rad/im.naturalHeight),w=im.naturalWidth*s,h=im.naturalHeight*s;ctx.drawImage(im,-w/2,-h/2,w,h);ctx.restore();return;
+  }
+  ctx.fillStyle='hsl('+c.hue+' 62% 50%)';ctx.beginPath();ctx.arc(0,0,rad,0,TAU);ctx.fill();
+  if(rad>5){ctx.fillStyle='#fff';ctx.font='700 '+Math.round(rad*1.15)+'px "Noto Sans Thai",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(c.ini,0,rad*.06);}
+}
+function drawCar(c){
+  if(!c.alive&&c.fall<=0)return;
+  const M=curMap(),spr=M.cars[c.id%6],u=CR/CFG.carR;let sc=1,al=1;if(!c.alive){sc=c.fall;al=c.fall;}
+  ctx.save();ctx.translate(c.x,c.y);ctx.scale(sc,sc);ctx.globalAlpha=al;
+  if(c.gear>0){ctx.save();ctx.scale(u,u);ctx.rotate(S.time*4);ctx.setLineDash([8,6]);ctx.lineWidth=4;ctx.strokeStyle=C.bulb;ctx.beginPath();ctx.arc(0,0,CFG.carR+12*c.gear,0,TAU);ctx.stroke();ctx.restore();}
+  const hr=.58*CR;
+  drawAvatarDisc(c,hr);                                   // profile picture stays upright inside the hole
+  if(ok(spr)){const m=spr.meta,k=hr/m.hr;ctx.save();ctx.rotate(curSkin==='th_bey'?S.time*10+c.id:c.head);ctx.drawImage(spr,-m.hx*k,-m.hy*k,m.w*k,m.h*k);ctx.restore();}
+  else{ctx.strokeStyle='#14111a';ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,CR,0,TAU);ctx.stroke();}
+  if(c.flash>0){ctx.fillStyle='rgba(255,255,255,.45)';ctx.beginPath();ctx.arc(0,0,CR,0,TAU);ctx.fill();}
+  if(c.shield>0){ctx.globalAlpha=al*.8;imgC(A.ui.effects.shield,0,0,CR*2.9,CR*2.9);ctx.globalAlpha=al;}
+  if(c.alive){
+    ctx.save();ctx.scale(u,u);const r=CFG.carR+3;ctx.rotate(c.head);const col=c.locked?C.cool:C.bulb;
+    if(S.phase==='setup'){ctx.strokeStyle=col;ctx.globalAlpha=.5;ctx.setLineDash([3,5]);ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(r+16,0);ctx.lineTo(r+74,0);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;}
+    ctx.fillStyle=col;ctx.strokeStyle='#14111a';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(r+19,0);ctx.lineTo(r+5,-9);ctx.lineTo(r+5,9);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.restore();
+    if(c.launchIn>0){ctx.globalAlpha=.9;imgC(A.ui.effects.ice,0,-CR*.2,CR*2.2,CR*2.2*(A.ui.effects.ice.naturalHeight||1)/(A.ui.effects.ice.naturalWidth||1));ctx.globalAlpha=1;}
+    if(c.atk>1)imgC(A.ui.badges.attack_x2,-CR*.95,-CR*1.15,CR*1.1,CR*1.1);
+    if(c.spd>1)imgC(A.ui.badges.speed,CR*.95,-CR*1.15,CR*1.1,CR*1.1);
+  }
+  ctx.restore();
+  if(c.alive&&CR>=7){
+    ctx.save();ctx.translate(c.x,c.y);ctx.scale(u,u);
+    const r=CFG.carR,w=34,by=r+6+c.gear*12;ctx.fillStyle='#14111a';ctx.fillRect(-w/2,by,w,5);
+    ctx.fillStyle=c.hp>50?C.cool:c.hp>25?C.bulb:C.hot;ctx.fillRect(-w/2,by,w*c.hp/100,5);
+    if(CR>=9){ctx.font='500 12px "Noto Sans Thai",sans-serif';ctx.textAlign='center';ctx.textBaseline='top';ctx.lineWidth=3;ctx.strokeStyle='#14111a';ctx.strokeText(c.name,0,by+8);ctx.fillStyle=C.fg;ctx.fillText(c.name,0,by+8);}
+    ctx.restore();
+  }
+}
+
+/* ---- screen furniture (px) ---- */
+const INK='#5a3340';
+function drawHud(tk){
+  const H=A.ui.hud,M=A.map[tk]||A.map.normal;
+  let r=fitBox(H.round_plate,50,200,260,150);
+  if(r)boxText('รอบ '+Math.min(S.round,CFG.rounds)+'/'+CFG.rounds,tbRect(H.round_plate,r,H.round_plate.meta.tb),INK,60);
+  r=fitBox(H.map_banner,320,200,520,150);
+  if(r){const hm=H.map_banner,sx=r[2]/hm.naturalWidth,tb=hm.meta.tb,bx=r[0]+(tb[0]*.42)*sx,by=r[1]+r[3]*.5,br=r[3]*.31;
+    if(ok(M.badge)){ctx.save();ctx.beginPath();ctx.arc(bx,by,br,0,TAU);ctx.clip();ctx.drawImage(M.badge,bx-br,by-br,br*2,br*2);ctx.restore();}
+    boxText(THEMES[tk].name,tbRect(hm,r,tb),INK,64);}
+  r=fitBox(H.alive_plate,850,200,190,160);
+  if(r)boxText('เหลือ '+aliveCars().length,tbRect(H.alive_plate,r,H.alive_plate.meta.tb),INK,52);
+}
+const CATS=[
+  ['cat_turn',['GG หมุนซ้าย · TikTok หมุนขวา','หมุนแล้วล็อกเลย']],
+  ['cat_aim',['Rose พุ่งใส่คนใกล้สุด','ไลก์ = ล็อกทิศฟรี']],
+  ['cat_guard',['Love you โล่กันชน 1 ครั้ง',"You're awesome ฮีลเลือด"]],
+  ['cat_fight',['Doughnut กงจักรหมุน','Ice Cream แช่แข็งคู่ต่อสู้']],
+  ['cat_map',['Tiny Diny หนองบึง · Finger Heart ทะเลทราย','G.O.A.T. Busker ทุ่งหญ้า · Mishka Bear ไก่ชน','Hat and Mustache เบเบลด']],
+  ['cat_flip',['ล้มกระดาน!','ทุกคนตก คนส่งชนะคนเดียว']],
+  ['cat_free',['ไลก์ ล็อกทิศ','ติดตาม โจมตี ×2 · แชร์ พุ่งเร็ว']]
+];
+const HOWTO=['เข้าไลฟ์ = ได้รถ','นับ 10 วิ ล็อกทิศ','ชน!','คันสุดท้ายชนะ'];
+function drawStrip(){
+  const X=40,Y=1290,Wd=890,Ht=290;
+  if(S.round===1&&S.phase==='setup'){
+    const hw=A.ui.howto,r=fitBox(hw,X,Y,Wd,Ht);
+    if(r)HOWTO.forEach((t,i)=>boxText(t,tbRect(hw,r,hw.meta.tbs[i]),INK,40));
+    return;
+  }
+  const [k,lines]=CATS[Math.floor(S.time/5)%CATS.length],ci=A.ui.cats[k],r=fitBox(ci,X,Y,Wd,Ht);
+  if(r)boxText(lines,tbRect(ci,r,ci.meta.tb),INK,52);
+}
+function drawClashBurst(){
+  if(S.phase!=='clash'||S.clashT>1)return;
+  const p=Math.min(1,S.clashT/.18),sc=.55+.45*p+(S.clashT>.7?-(S.clashT-.7)*1.2:0),st=A.ui.callouts.starburst;
+  ctx.save();ctx.globalAlpha=Math.max(0,1-Math.max(0,S.clashT-.7)/.3);
+  if(ok(st)){const w=680*sc,h=w*st.naturalHeight/st.naturalWidth,r=[AX-w/2,AY-h/2,w,h];ctx.drawImage(st,r[0],r[1],w,h);boxText('ชน!',tbRect(st,r,st.meta.tb),'#e8434f',230*sc,'#6b2a3a');}
+  ctx.restore();
+}
+function drawOver(){
+  if(S.phase!=='over')return;
+  ctx.fillStyle='rgba(20,17,26,.8)';ctx.fillRect(0,0,CW,CH);
+  const w=S.winner;
+  ftext(w?(S.flipped?'ล้มกระดานชนะ!':'ผู้ชนะ'):'ไม่มีผู้ชนะ',AX,440,860,120,'#ffd166','#6b2a3a');
+  if(!w)return;
+  const fr=A.ui.frame,m=fr.meta||{},CY=860,D=470;
+  ctx.save();ctx.translate(AX,CY);
+  const rad=(m.hr||0)>0?D*m.hr/m.w:D*.36;drawAvatarDisc(w,rad);
+  if(ok(fr)){const k=D/m.w;ctx.drawImage(fr,-(m.hx||m.w/2)*k,-(m.hy||m.h/2)*k,m.w*k,m.h*k);}
+  ctx.restore();
+  const cr=A.ui.callouts.crown;if(ok(cr))imgC(cr,AX,CY-D*.58,240,240*cr.naturalHeight/cr.naturalWidth);
+  const wr=A.ui.callouts.winner_ribbon,rb=fitBox(wr,AX-420,1120,840,260);
+  if(rb)boxText(w.name,tbRect(wr,rb,wr.meta.tb),INK,80);
+  ftext('เลือดเหลือ '+Math.round(w.hp)+'  ·  ชนตก '+w.kills,AX,1440,820,44,'#f4efe4','#14111a');
+}
+function draw(){
+  ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,CW,CH);ctx.fillStyle='#17141d';ctx.fillRect(0,0,CW,CH);
+  const tk=S.phase==='setup'?leadTheme():S.theme;curSkin=tk;
+  drawArena();drawCountdown();
+  ctx.save();ctx.translate(AX,AY);ctx.scale(ASC,ASC);
+  S.items.forEach(drawItem);
+  S.cars.slice().sort((a,b)=>a.y-b.y).forEach(drawCar);
+  drawFx();
+  S.parts.forEach(p=>{ctx.globalAlpha=Math.max(0,p.l*2);ctx.fillStyle='hsl('+p.hue+' 90% 65%)';ctx.fillRect(p.x-2,p.y-2,4,4);});ctx.globalAlpha=1;
+  ctx.restore();
+  drawHud(tk);if(S.phase!=='over')drawStrip();drawClashBurst();drawOver();
+}
+
+/* UI */
+let lastH='';
+function hud(){
+  const ph=S.phase,t=ph==='setup'?'นับถอยหลัง '+Math.ceil(S.t):ph==='clash'?'ชน!':ph==='shrink'?'วงบีบ':'จบเกม';
+  const tk=ph==='setup'?leadTheme():S.theme;const h=S.round+'|'+ph+'|'+t+'|'+aliveCars().length+'|'+tk;if(h===lastH)return;lastH=h;
+  $('#hTheme').textContent='แมพ '+THEMES[tk].name+(ph==='setup'&&tk!=='normal'?' (นำ)':'');
+  $('#hRound').textContent='รอบ '+Math.min(S.round,CFG.rounds)+'/'+CFG.rounds;
+  const p=$('#hPhase');p.textContent=t;p.className='chip '+(ph==='setup'?'setup':ph==='clash'||ph==='shrink'?'clash':'over');
+  $('#hAlive').textContent='เหลือ '+aliveCars().length+' คัน';
+}
+function renderWho(){whoDirty=true;}
+let lastWho=0;
+function flushUI(now){if(logDirty){logDirty=false;$('#log').innerHTML=S.log.map(x=>'<li>'+esc(x)+'</li>').join('');}if(whoDirty&&now-lastWho>300){whoDirty=false;lastWho=now;doRenderWho();}}
+function doRenderWho(){
+  const sel=$('#who'),cur=sel.value;
+  sel.innerHTML=viewers.map(v=>{const c=S.cars.find(x=>x.id===v.id);const dead=c&&!c.alive;return '<option value="'+v.id+'">'+(dead?'✕ ':'')+esc(v.name)+(v.bot?' · บอท':'')+'</option>';}).join('');
+  if(cur)sel.value=cur;
+}
+function who(){return Number($('#who').value);}
+$('#gifts').innerHTML=GIFTS.map(g=>'<button class="gift" data-g="'+g.id+'"><img alt="" src="'+g.img+'"><div><b>'+g.name+'</b><span>'+g.desc+'</span></div></button>').join('');
+$('#gifts').addEventListener('click',e=>{const b=e.target.closest('[data-g]');if(b&&who())giveGift(who(),b.dataset.g,amt);});
+$('#amt').addEventListener('click',e=>{const b=e.target.closest('[data-n]');if(!b)return;amt=Number(b.dataset.n);document.querySelectorAll('#amt [data-n]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));});
+$('#like').onclick=()=>who()&&doLike(who());
+$('#follow').onclick=()=>who()&&doFollow(who());
+$('#share').onclick=()=>who()&&doShare(who());
+$('#join').onclick=()=>joinViewer(newViewer());
+const joinMany=n=>{for(let i=0;i<n;i++)joinViewer(newViewer());};
+$('#join10').onclick=()=>joinMany(10);
+$('#join100').onclick=()=>joinMany(100);
+$('#skip').onclick=()=>{if(S.phase==='setup')S.t=0;};
+$('#restart').onclick=()=>newGame();
+$('#botTest').onclick=()=>{document.querySelector('#auto').checked=false;viewers.splice(0);newViewer();newGame();};
+document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('[data-tab]').forEach(x=>x.setAttribute('aria-selected',String(x===b)));
+  $('#play').hidden=b.dataset.tab!=='play';$('#rules').hidden=b.dataset.tab!=='rules';
+});
+for(let i=0;i<9;i++)newViewer();
+newGame();
+let last=performance.now();
+function frame(now){
+  let dt=Math.min(.1,(now-last)/1000);last=now;
+  const hm=Math.max(1/480,Math.min(1/60,CR*.8/(CFG.slide*S.R*CFG.friction*2.2)));
+  while(dt>0){const h=Math.min(dt,hm);update(h);dt-=h;}
+  flushUI(now);hud();draw();requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+</script>
