@@ -514,7 +514,7 @@ function fitView(){PW=cv.width;PH=cv.height;K=Math.min(PW/CW,PH/CH);VW=PW/K;VH=P
 /* ================= layout: every block can be moved / resized / re-texted (editor in the test page) =================
    x,y,w,h are in design units (1080 wide, measured below the top margin); fs = text size in percent */
 const LAYD={
-  round:{x:206,y:44,w:132,h:126,fs:100},banner:{x:340,y:46,w:400,h:130,fs:100},alive:{x:742,y:44,w:132,h:126,fs:100},
+  round:{x:220,y:44,w:122,h:120,fs:100},banner:{x:348,y:46,w:384,h:126,fs:100},alive:{x:738,y:44,w:122,h:120,fs:100},
   howto:{x:236,y:176,w:608,h:146,fs:100},free:{x:220,y:452,w:640,h:64,fs:100},
   left:{x:6,y:56,w:208,h:470,fs:100},right:{x:866,y:76,w:208,h:450,fs:100},
   count:{x:876,y:1284,w:136,h:136,fs:100},queue:{x:846,y:1440,w:222,h:230,fs:100},arena:{x:68,y:546,w:944,h:944,fs:100}
@@ -745,7 +745,7 @@ const FREEG=[{f:'like',t:'กดใจ',n:'ล็อกทิศ'},{f:'follow',t
 let activeMapKey='';
 function drawPanel(items,B,title,sepAfter){
   const {x,y,w,h}=B,f=B.fs/100,rh=(h-(title?58:36))/items.length,top=y+(title?44:18),ic=Math.max(18,Math.min(w*.22,rh*.78));
-  const tw=w-22-ic-12-16;let sz=Math.min(rh*.5,30)*f;
+  const tw=w-22-ic-12-16;let sz=Math.min(rh*.46,27)*f;
   for(const it of items){ctx.font='500 '+sz+'px '+FONT;while(ctx.measureText(it.t).width>tw&&sz>9){sz-=1;ctx.font='500 '+sz+'px '+FONT;}}
   ctx.save();
   ctx.beginPath();ctx.roundRect(x,y,w,h,30);ctx.fillStyle='rgba(38,22,56,.94)';ctx.fill();ctx.lineWidth=6;ctx.strokeStyle='#fdebc6';ctx.stroke();
@@ -756,7 +756,7 @@ function drawPanel(items,B,title,sepAfter){
     ctx.beginPath();ctx.arc(ix+ic/2,cy,ic/2+1,0,TAU);ctx.fillStyle='rgba(255,243,207,.2)';ctx.fill();
     if(it.g&&ok(imgs[it.g]))ctx.drawImage(imgs[it.g],ix+2,iy+2,ic-4,ic-4);else if(it.f)glyph(it.f,ix+ic/2,cy,ic*.85);
     const tx=ix+ic+12;
-    if(it.e){const s1=sz*.84;lt(it.t,tx,cy-s1*1.0,tw,s1,'#fff6dc');lt(it.e,tx,cy+s1*.02,tw,Math.max(12,s1*.66),'#9fe7c9');lt(it.n,tx,cy+s1*.98,tw,Math.max(11,s1*.5),'#ffd166');}
+    if(it.e){const s1=sz*.7;lt(it.t,tx,cy-s1*1.15,tw,s1,'#fff6dc');lt(it.e,tx,cy-s1*.02,tw,Math.max(11,s1*.62),'#9fe7c9');lt(it.n,tx,cy+s1*1.05,tw,Math.max(10,s1*.5),'#ffd166');}
     else{lt(it.t,tx,cy-sz*.36,tw,sz,'#fff6dc');lt(it.n,tx,cy+sz*.52,tw,Math.max(12,Math.round(sz*.55)),'#ffd166');}
     if(it.k&&it.k===activeMapKey){ctx.beginPath();ctx.roundRect(x+14,cy-rh/2+3,w-28,rh-6,16);ctx.lineWidth=4;ctx.strokeStyle='#ffe34d';ctx.stroke();}
   });
@@ -802,7 +802,7 @@ function drawQueue(){   // profiles of everyone who joined during this game: the
 }
 function drawMapNote(){   // what the chosen map does, written under the arena (plain text, no frame)
   if(!activeMapKey)return;const it=RIGHTG.find(r=>r.k===activeMapKey);if(!it)return;
-  const A_=LAY.arena,txt='แมพ '+it.t+' : '+it.e,sz=Math.max(26,Math.min(48,A_.w*.05))*A_.fs/100;
+  const A_=LAY.arena,txt='แมพ '+it.t+' : '+it.e,sz=Math.max(20,Math.min(34,A_.w*.036))*A_.fs/100;
   ftext(txt,A_.x+A_.w/2,A_.y+A_.h+14+sz*.8,CW-40,sz,'#fff6dc','#14111a');
 }
 function drawPanels(){drawPanel(LEFTG,LAY.left,null,0);drawPanel(RIGHTG,LAY.right,TXT.rightTitle,0);drawFreeFrame();drawQueue();drawMapNote();}
