@@ -482,9 +482,9 @@ function sim(h){
 }
 
 /* ===== drawing: 1080x1920 TikTok portrait screen ===== */
-const CW=1080,CH=1920,AX=540,AY=1498;      // arena centre on screen
+const CW=1080,CH=1920,AX=540,AY=712;      // arena centre on screen
 let ASC=1.5;                              // game units -> px, set per map so the rim always ends 75 px from the screen edge
-function arenaScale(th){return 358/CFG.R0;}
+function arenaScale(th){return 352/CFG.R0;}
 const cv=$('#cv'),ctx=cv.getContext('2d');cv.width=CW;cv.height=CH;
 const MAPKEY={normal:'fair',th_frog:'frog',th_beetle:'desert',th_pig:'pig',th_cock:'cock',th_bey:'bey'};
 function ld(o){const i=new Image();i.src=o.u;i.meta=o;return i;}
@@ -596,7 +596,7 @@ function drawCountdown(){
   if(S.phase!=='setup')return;
   const n=Math.ceil(S.t),s=String(n),last=S.t<=3;
   drawDigits(s,AX,AY,300,.34);                       // big faint number in the middle of the arena
-  const pulse=last?1+.12*Math.abs(Math.sin(S.t*Math.PI*2)):1,BX=986,BY=428;   // badge top right, beside the how-to strip
+  const pulse=last?1+.12*Math.abs(Math.sin(S.t*Math.PI*2)):1,BX=968,BY=905;   // badge top right, beside the how-to strip
   ctx.save();ctx.translate(BX,BY);ctx.scale(pulse,pulse);
   ctx.beginPath();ctx.arc(0,0,66,0,TAU);ctx.fillStyle=last?'rgba(120,10,30,.7)':'rgba(30,14,48,.66)';ctx.fill();
   ctx.lineWidth=5;ctx.strokeStyle=last?'#ff5470':'#fdebc6';ctx.stroke();ctx.restore();
@@ -654,14 +654,14 @@ function drawCar(c){
 const INK='#5a3340';
 function drawHud(tk){
   const H=A.ui.hud,M=A.map[tk]||A.map.normal;
-  let r=fitBox(H.round_plate,16,192,310,152);
-  if(r)boxText('รอบ '+Math.min(S.round,CFG.rounds)+'/'+CFG.rounds,tbRect(H.round_plate,r,H.round_plate.meta.tb,.02,.02),INK,92);
-  r=fitBox(H.map_banner,270,192,540,152);
+  let r=fitBox(H.round_plate,232,46,100,130);
+  if(r)boxText('รอบ '+Math.min(S.round,CFG.rounds)+'/'+CFG.rounds,tbRect(H.round_plate,r,H.round_plate.meta.tb,.02,.02),INK,40);
+  r=fitBox(H.map_banner,336,46,408,130);
   if(r){const hm=H.map_banner,sx=r[2]/hm.naturalWidth,sy=r[3]/hm.naturalHeight,tb=hm.meta.tb,sk=hm.meta.sock||[tb[0]*.42,hm.naturalHeight/2,hm.naturalHeight*.3],bx=r[0]+sk[0]*sx,by=r[1]+sk[1]*sy,br=sk[2]*sx*.97;
     if(ok(M.badge)){ctx.save();ctx.beginPath();ctx.arc(bx,by,br,0,TAU);ctx.clip();ctx.drawImage(M.badge,bx-br,by-br,br*2,br*2);ctx.restore();}
-    boxText(THEMES[tk].name,tbRect(hm,r,tb,.02,.04),INK,84);}
-  r=fitBox(H.alive_plate,754,192,310,152);
-  if(r)boxText('เหลือ '+aliveCars().length,tbRect(H.alive_plate,r,H.alive_plate.meta.tb,.02,.02),INK,84);
+    boxText(THEMES[tk].name,tbRect(hm,r,tb,.02,.04),INK,64);}
+  r=fitBox(H.alive_plate,748,46,100,130);
+  if(r)boxText('เหลือ '+aliveCars().length,tbRect(H.alive_plate,r,H.alive_plate.meta.tb,.02,.02),INK,40);
 }
 /* gift menu: a panel drawn here (not a picture): title, then 4 gifts per page as  picture + what it does + gift name */
 function glyph(kind,cx,cy,s){   // small vector pictures for the free actions (no gift picture exists for them)
@@ -688,15 +688,15 @@ const RIGHTG=[
   {g:'th_cock',t:'ลานไก่ชน',n:'Mishka Bear'},{g:'th_bey',t:'เบเบลด',n:'Hat and Mustache'}
 ];
 const FREEG=[{f:'like',t:'กดใจ',n:'ล็อกทิศ'},{f:'follow',t:'ติดตาม',n:'โจมตี ×2'},{f:'share',t:'แชร์',n:'พุ่งเร็วขึ้น'}];
-const PNL={y:598,h:462,lx:12,rx:546,w:522,ic:46};
+const PNL={y:56,h:470,lx:6,rx:866,w:208,ic:36};
 let gSize=0;
 function calcGiftSize(){
-  if(gSize)return gSize;const tw=PNL.w-22-PNL.ic-12-16;let m=29;
-  for(const it of LEFTG.concat(RIGHTG)){let s=29;ctx.font='500 '+s+'px '+FONT;while(ctx.measureText(it.t).width>tw&&s>9){s--;ctx.font='500 '+s+'px '+FONT;}m=Math.min(m,s);}
+  if(gSize)return gSize;const tw=PNL.w-22-PNL.ic-12-16;let m=26;
+  for(const it of LEFTG.concat(RIGHTG)){let s=26;ctx.font='500 '+s+'px '+FONT;while(ctx.measureText(it.t).width>tw&&s>9){s--;ctx.font='500 '+s+'px '+FONT;}m=Math.min(m,s);}
   return gSize=m;
 }
-function drawPanel(items,x,title,sepAfter){
-  const {y,h,w,ic}=PNL,sz=calcGiftSize(),rh=(h-40)/Math.max(items.length,7),top=y+26;
+function drawPanel(items,x,title,sepAfter,o){
+  const {y,h,w,ic}=Object.assign({},PNL,o||{}),sz=calcGiftSize(),rh=(h-(title?58:36))/items.length,top=y+(title?44:18);
   ctx.save();
   ctx.beginPath();ctx.roundRect(x,y,w,h,30);ctx.fillStyle='rgba(38,22,56,.94)';ctx.fill();ctx.lineWidth=6;ctx.strokeStyle='#fdebc6';ctx.stroke();
   ctx.setLineDash([10,8]);ctx.lineWidth=2.5;ctx.strokeStyle='rgba(232,162,174,.8)';ctx.beginPath();ctx.roundRect(x+11,y+11,w-22,h-22,22);ctx.stroke();ctx.setLineDash([]);
@@ -716,24 +716,24 @@ function drawPanel(items,x,title,sepAfter){
   }
   ctx.restore();
 }
-function drawFreeFrame(){   // like / follow / share: their own frame under the arena
-  const w=720,h=70,x=AX-w/2,y=1076,cw=w/3;
+function drawFreeFrame(){   // like / follow / share: own frame under the map panel
+  const x=PNL.rx,w=PNL.w,y=372,h=156,rh=h/3;
   ctx.save();
   ctx.beginPath();ctx.roundRect(x,y,w,h,26);ctx.fillStyle='rgba(38,22,56,.94)';ctx.fill();ctx.lineWidth=5;ctx.strokeStyle='#fdebc6';ctx.stroke();
   FREEG.forEach((it,i)=>{
-    const cx0=x+i*cw,cy=y+h/2;
-    if(i>0){ctx.setLineDash([6,6]);ctx.lineWidth=2;ctx.strokeStyle='rgba(232,162,174,.7)';ctx.beginPath();ctx.moveTo(cx0,y+12);ctx.lineTo(cx0,y+h-12);ctx.stroke();ctx.setLineDash([]);}
-    ctx.beginPath();ctx.arc(cx0+36,cy,26,0,TAU);ctx.fillStyle='rgba(255,243,207,.2)';ctx.fill();glyph(it.f,cx0+36,cy,44);
-    lt(it.t,cx0+72,cy-10,cw-80,30,'#fff6dc');lt(it.n,cx0+72,cy+17,cw-80,22,'#ffd166');
+    const cy=y+i*rh+rh/2;
+    if(i>0){ctx.setLineDash([6,6]);ctx.lineWidth=2;ctx.strokeStyle='rgba(232,162,174,.7)';ctx.beginPath();ctx.moveTo(x+16,y+i*rh);ctx.lineTo(x+w-16,y+i*rh);ctx.stroke();ctx.setLineDash([]);}
+    ctx.beginPath();ctx.arc(x+34,cy,20,0,TAU);ctx.fillStyle='rgba(255,243,207,.2)';ctx.fill();glyph(it.f,x+34,cy,34);
+    lt(it.t,x+64,cy-8,w-72,24,'#fff6dc');lt(it.n,x+64,cy+14,w-72,17,'#ffd166');
   });
   ctx.restore();
 }
-function drawPanels(){drawPanel(LEFTG,PNL.lx,null,0);drawPanel(RIGHTG,PNL.rx,'ล็อกแมพ',0);drawFreeFrame();}
+function drawPanels(){drawPanel(LEFTG,PNL.lx,null,0);drawPanel(RIGHTG,PNL.rx,'ล็อกแมพ',0,{y:76,h:276});drawFreeFrame();}
 const HOWTO=[['เข้าไลฟ์','ได้รถ'],['กดใจ ล็อกทิศ','ก่อนหมด 10 วิ'],['ชน!','พุ่งพร้อมกัน'],['ตกขอบ = ออก','เหลือคันเดียวชนะ']];
 function plate(x,y,w,h){ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,h,h*.3);ctx.fillStyle='#fdebc6';ctx.fill();ctx.lineWidth=4;ctx.strokeStyle='#7a3a5a';ctx.stroke();ctx.setLineDash([8,6]);ctx.lineWidth=2.5;ctx.strokeStyle='#e8a2ae';ctx.beginPath();ctx.roundRect(x+7,y+7,w-14,h-14,h*.24);ctx.stroke();ctx.restore();}
 function drawHowto(){
   const hw=A.ui.howto;if(!ok(hw))return;
-  const r=fitBox(hw,40,326,1000,206);
+  const r=fitBox(hw,236,190,608,150);
   let hs=40;if(r){const pw0=r[2]/4*.97-16;HOWTO.forEach(l=>{hs=Math.min(hs,fitSize(l,[0,0,pw0,(98-20)],40));});}
   if(r)HOWTO.forEach((lines,i)=>{const b=tbRect(hw,r,hw.meta.tbs[i],0,0),pw=r[2]/4*.97,ph=98,px=b[0]+b[2]/2-pw/2,py=b[1]-14;plate(px,py,pw,ph);boxText(lines,[px+8,py+10,pw-16,ph-20],INK,hs);});
 }
