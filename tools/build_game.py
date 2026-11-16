@@ -95,7 +95,7 @@ def cream_boxes(im, n=1, bmin=140):
         if area < im.size[0] * im.size[1] * 0.004:
             continue
         d = ndi.distance_transform_edt(m)
-        ys, xs = np.where(d >= max(4, 0.05 * np.sqrt(area)))
+        ys, xs = np.where(d >= max(3, 0.022 * np.sqrt(area)))
         if len(ys):
             comps.append((area, xs.min(), ys.min(), xs.max() + 1, ys.max() + 1))
     comps.sort(reverse=True)
@@ -112,8 +112,22 @@ def band_box(im):
     ys = rows
     xs = np.where(mask[ys[0]:ys[-1] + 1].any(axis=0))[0]
     # the trophy sits over the top centre of the band, so the name goes in the lower part
-    y0, y1 = ys[0] + int(0.30 * (ys[-1] - ys[0])), ys[-1] - int(0.04 * (ys[-1] - ys[0]))
+    y0, y1 = ys[0] + int(0.38 * (ys[-1] - ys[0])), ys[-1] - int(0.04 * (ys[-1] - ys[0]))
     return [int(xs.min() + 0.06 * (xs.max() - xs.min())), int(y0), int(0.88 * (xs.max() - xs.min())), int(y1 - y0)]
+
+
+def socket_circle(im):
+    """Centre and radius (px) of the empty grey disc where a map icon goes on the HUD banner."""
+    a = np.array(im)
+    rgb = a[..., :3].astype(int)
+    mask = (a[..., 3] > 200) & (np.abs(rgb[..., 0] - rgb[..., 1]) < 14) & (np.abs(rgb[..., 1] - rgb[..., 2]) < 14) & (rgb[..., 0] > 170) & (rgb[..., 0] < 248)
+    lab, k = ndi.label(mask)
+    if k == 0:
+        return None
+    areas = ndi.sum(mask, lab, range(1, k + 1))
+    i = int(np.argmax(areas)) + 1
+    ys, xs = np.where(lab == i)
+    return [float(xs.mean()), float(ys.mean()), float(np.sqrt(len(ys) / np.pi))]
 
 
 def main():
@@ -137,8 +151,10 @@ def main():
     u['callouts'] = {'starburst': with_tb('ui/callouts/starburst.png', maxw=640),
                      'crown': asset('ui/callouts/crown.png', maxw=300)[0],
                      'winner_ribbon': with_tb('ui/callouts/winner_ribbon.png', band=True, maxw=800)}
+    mb = with_tb('ui/hud/map_banner.png', maxw=560)
+    mb['sock'] = socket_circle(load(A + 'ui/hud/map_banner.png', maxw=560))
     u['hud'] = {'round_plate': with_tb('ui/hud/round_plate.png', maxw=300),
-                'map_banner': with_tb('ui/hud/map_banner.png', maxw=560),
+                'map_banner': mb,
                 'alive_plate': with_tb('ui/hud/alive_plate.png', maxw=280)}
     u['cats'] = {k: with_tb('ui/%s.png' % k, bmin=(40 if k == 'cat_flip' else 140), maxw=900) for k in ['cat_turn', 'cat_aim', 'cat_guard', 'cat_fight', 'cat_map', 'cat_flip', 'cat_free']}
     u['howto'] = with_tb('ui/howto_strip.png', n=4, maxw=1100)

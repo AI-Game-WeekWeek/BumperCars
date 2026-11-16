@@ -222,7 +222,7 @@ const ASSETS=__ASSETS__;
 const IMG=ASSETS.gifts;
 const $=s=>document.querySelector(s);
 const TAU=Math.PI*2, DEG=Math.PI/180;
-const CFG={rounds:5,count:10,R0:270,R1:85,carR:17,clashMax:6,slide:1.1,friction:1.5,spin:2.2,maxCars:20};
+const CFG={rounds:5,count:10,R0:270,R1:85,carR:30,clashMax:6,slide:1.1,friction:1.5,spin:2.2,maxCars:20};
 const C={bg:'#17141d',floor:'#2b2636',bulb:'#ffbd2e',hot:'#ff5470',cool:'#37d3bb',fg:'#f4efe4',line:'#3b3447'};
 const NAMES=['พี่ต้น','น้องมิ้นท์','เจ๊หมวย','ลุงแมว','ป้าพลอย','บอลหล่อ','แพรวา','น้องบัว','ตี๋เล็ก','หนูนา','ครูเอ','มายด์','เก่งกาจ','ฟ้าใส','โอ๊ตตี้','ก้อยยี่','นายหมี','เจนจิ','พลอยชมพู','ต้นกล้า','ขวัญใจ','ปุ๊กกี้','แจ็คกี้','มะนาว'];
 const GIFTS=[
@@ -260,7 +260,7 @@ const viewers=[]; let nextId=1, amt=1, simT=1, joinT=5;
 let CR=CFG.carR, logDirty=false, whoDirty=false;
 S.votes={};S.theme='normal';S.fr=CFG.friction;S.lastTheme='';
 function leadTheme(){let best='normal',bv=0;for(const k in S.votes){const v=S.votes[k];if(v>bv||(v===bv&&v>0&&k===S.lastTheme)){best=k;bv=v;}}return best;}
-function setCR(n){CR=Math.max(3,Math.min(CFG.carR,160/Math.sqrt(Math.max(1,n))));}
+function setCR(n){CR=Math.max(3,Math.min(CFG.carR,200/Math.sqrt(Math.max(1,n))));}
 
 function R_of(r){return CFG.R0+(CFG.R1-CFG.R0)*(r-1)/(CFG.rounds-1);}
 function initial(n){const m=n.match(/[ก-ฮA-Za-z0-9]/);return m?m[0]:'?';}
@@ -296,7 +296,7 @@ function mkCar(v){
   let x=0,y=0;
   for(let i=0;i<(S.cars.length>150?3:40);i++){const a=Math.random()*TAU, r=Math.sqrt(Math.random())*(S.R-CR*2); x=Math.cos(a)*r; y=Math.sin(a)*r;
     if(S.cars.every(c=>!c.alive||Math.hypot(c.x-x,c.y-y)>CR*2.6))break;}
-  return {id:v.id,name:v.name,hue:v.hue,ini:v.ini,img:v.img,bot:!!v.bot,botT:v.bot?1+Math.random()*7:0,x,y,vx:0,vy:0,hp:100,alive:true,fall:0,head:Math.random()*TAU,locked:false,lockNearest:false,atk:1,spd:1,gear:0,shield:0,delay:0,launchIn:0,pv:null,cd:{},flash:0,kills:0};
+  return {id:v.id,name:v.name,hue:v.hue,ini:v.ini,img:v.img,bot:!!v.bot,botT:v.bot?1+Math.random()*7:0,x,y,vx:0,vy:0,hp:100,alive:true,fall:0,head:Math.random()*TAU,locked:false,lockNearest:false,atk:1,spd:1,gear:0,shield:0,delay:0,launchIn:0,pv:null,cd:{},flash:0,kills:0,hits:0,born:S.time,died:0};
 }
 function joinViewer(v){
   
@@ -325,7 +325,7 @@ function startSetup(){
 function nearestEnemy(c){let b=null,bd=1e9;for(const o of aliveCars()){if(o===c)continue;const d=Math.hypot(o.x-c.x,o.y-c.y);if(d<bd){bd=d;b=o;}}return b;}
 function burst(x,y,hue,n=10){if(S.parts.length>300)return;for(let i=0;i<n;i++){const a=Math.random()*TAU,s=60+Math.random()*140;S.parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,l:.5,hue});}}
 function eliminate(c,why,src){
-  if(!c.alive)return; c.alive=false;c.fall=1;c.elimT=S.time;c.elimR=S.round; burst(c.x,c.y,c.hue,14);fx('poof',c.x,c.y,CR*4);
+  if(!c.alive)return; c.alive=false;c.fall=1;c.elimT=S.time;c.elimR=S.round;c.died=S.time; burst(c.x,c.y,c.hue,14);fx('poof',c.x,c.y,CR*4);
   if(src&&src!==c)src.kills++;
   log(c.name+' '+why+(src&&src!==c?' (โดย '+src.name+')':''));renderWho();
 }
@@ -336,8 +336,8 @@ function hurt(c,dmg,src){
 
 function flipBoard(c,v){
   if(S.phase==='over')return;
-  for(const o of S.cars){if(o!==c&&o.alive){o.alive=false;o.fall=1;o.elimT=S.time;o.elimR=S.round;burst(o.x,o.y,o.hue,3);}}
-  S.pending.splice(0);S.winner=c;S.flipped=true;S.phase='over';S.overT=9;
+  for(const o of S.cars){if(o!==c&&o.alive){o.alive=false;o.fall=1;o.elimT=S.time;o.elimR=S.round;o.died=S.time;burst(o.x,o.y,o.hue,3);}}
+  S.pending.splice(0);S.winner=c;S.flipped=true;S.phase='over';S.overT=9;S.endT=S.time;
   log(v.name+' ล้มทั้งกระดาน! ชนะคนเดียว');renderWho();
 }
 function giftOk(){return S.phase!=='over';}
@@ -383,7 +383,7 @@ function collide(a,b){
       const sa=Math.hypot(a.vx,a.vy),sb=Math.hypot(b.vx,b.vy),j=-(1+.9)*rv/2;
       a.vx-=j*nx;a.vy-=j*ny;b.vx+=j*nx;b.vy+=j*ny;
       const tot=sa+sb+1,imp=Math.abs(rv)*0.045*(S.theme==='th_pig'?1.5:1);
-      hurt(b,imp*a.atk*(sa/tot)*2,a);hurt(a,imp*b.atk*(sb/tot)*2,b);
+      a.hits++;b.hits++;hurt(b,imp*a.atk*(sa/tot)*2,a);hurt(a,imp*b.atk*(sb/tot)*2,b);
       burst((a.x+b.x)/2,(a.y+b.y)/2,50,4);fx('hit_spark',(a.x+b.x)/2,(a.y+b.y)/2,CR*3);
     }
   }
@@ -393,7 +393,7 @@ function ringHit(a,b){
   const d=Math.hypot(b.x-a.x,b.y-a.y),ringR=CR+12*a.gear*CR/CFG.carR;
   if(d<ringR+CR&&(a.cd[b.id]||0)<=0){
     a.cd[b.id]=.35; const nx=(b.x-a.x)/(d||1),ny=(b.y-a.y)/(d||1);
-    b.vx+=nx*140;b.vy+=ny*140; hurt(b,9*a.atk*(1+.3*a.gear),a); burst(b.x,b.y,40,3);
+    a.hits++;b.vx+=nx*140;b.vy+=ny*140; hurt(b,9*a.atk*(1+.3*a.gear),a); burst(b.x,b.y,40,3);
   }
 }
 function clashStep(h){
@@ -431,7 +431,7 @@ function endRound(){
   const A=aliveCars();
   if(A.length<=1||S.round>=CFG.rounds){
     S.winner=A.length?A.slice().sort((a,b)=>b.hp-a.hp||b.kills-a.kills)[0]:(S.cars.filter(c=>c.elimR===S.round).sort((a,b)=>b.elimT-a.elimT||b.hp-a.hp||b.kills-a.kills)[0]||null);
-    S.phase='over';S.overT=9; log(S.winner?'ผู้ชนะ: '+S.winner.name+(A.length?'':' (ตกเป็นคันสุดท้าย)'):'ไม่มีผู้ชนะ');
+    S.phase='over';S.overT=9;S.endT=S.time; log(S.winner?'ผู้ชนะ: '+S.winner.name+(A.length?'':' (ตกเป็นคันสุดท้าย)'):'ไม่มีผู้ชนะ');
   }else startSetup();
 }
 function update(h){
@@ -460,7 +460,9 @@ function sim(h){
 }
 
 /* ===== drawing: 1080x1920 TikTok portrait screen ===== */
-const CW=1080,CH=1920,AX=510,AY=800,ASC=880/540;      // arena centre on screen, game units -> px
+const CW=1080,CH=1920,AX=540,AY=815;      // arena centre on screen
+let ASC=1.5;                              // game units -> px, set per map so the rim always ends 75 px from the screen edge
+function arenaScale(th){const M=A.map[th]||A.map.normal;const inner=M.rim?M.rim.meta.inner:CFG.R0/(CFG.R0+16);return 465*inner/CFG.R0;}
 const cv=$('#cv'),ctx=cv.getContext('2d');cv.width=CW;cv.height=CH;
 const MAPKEY={normal:'fair',th_frog:'frog',th_beetle:'desert',th_pig:'pig',th_cock:'cock',th_bey:'bey'};
 function ld(o){const i=new Image();i.src=o.u;i.meta=o;return i;}
@@ -472,9 +474,9 @@ A.ui={digits:U.digits.map(ld),items:{},effects:{},badges:{},callouts:{},hud:{},c
 for(const g of ['items','effects','badges','callouts','hud','cats'])for(const k in U[g])A.ui[g][k]=ld(U[g][k]);
 const ok=i=>i&&i.complete&&i.naturalWidth>0;
 function imgC(i,cx,cy,w,h){if(ok(i))ctx.drawImage(i,cx-w/2,cy-h/2,w,h);}
+function fitRect(i,x,y,w,h){const s=Math.min(w/i.naturalWidth,h/i.naturalHeight),dw=i.naturalWidth*s,dh=i.naturalHeight*s;return [x+(w-dw)/2,y+(h-dh)/2,dw,dh];}
 function fitBox(i,x,y,w,h){
-  if(!ok(i))return null;const s=Math.min(w/i.naturalWidth,h/i.naturalHeight),dw=i.naturalWidth*s,dh=i.naturalHeight*s,dx=x+(w-dw)/2,dy=y+(h-dh)/2;
-  ctx.drawImage(i,dx,dy,dw,dh);return [dx,dy,dw,dh];
+  if(!ok(i))return null;const r=fitRect(i,x,y,w,h);ctx.drawImage(i,r[0],r[1],r[2],r[3]);return r;
 }
 function cover(i){if(!ok(i))return;const s=Math.max(CW/i.naturalWidth,CH/i.naturalHeight),w=i.naturalWidth*s,h=i.naturalHeight*s;ctx.drawImage(i,(CW-w)/2,(CH-h)/2,w,h);}
 const FONT='Mitr,"Noto Sans Thai",sans-serif';
@@ -487,23 +489,41 @@ function ftext(t,cx,cy,maxW,size,fill,stroke){
   ctx.fillStyle=fill;ctx.fillText(t,cx,y);
 }
 /* text area of a frame: tb is measured on the picture by the build script, r is where the picture was drawn */
-function tbRect(i,r,tb){const sx=r[2]/i.naturalWidth,sy=r[3]/i.naturalHeight;return [r[0]+tb[0]*sx,r[1]+tb[1]*sy,tb[2]*sx,tb[3]*sy];}
-function boxText(lines,b,fill,maxSize,stroke){
-  if(!Array.isArray(lines))lines=[lines];const n=lines.length;let s=Math.min(maxSize,b[3]/n/1.12);
+function tbRect(i,r,tb,ix=.05,iy=.12){const sx=r[2]/i.naturalWidth,sy=r[3]/i.naturalHeight,w=tb[2]*sx,h=tb[3]*sy;return [r[0]+tb[0]*sx+w*ix,r[1]+tb[1]*sy+h*iy,w*(1-2*ix),h*(1-2*iy)];}
+function fitSize(lines,b,maxSize){
+  if(!Array.isArray(lines))lines=[lines];let s=Math.min(maxSize,b[3]/lines.length/1.12);
   const fits=()=>{ctx.font='500 '+s+'px '+FONT;return lines.every(l=>ctx.measureText(l).width<=b[2]*.97);};
-  while(!fits()&&s>8)s-=1;
+  while(!fits()&&s>8)s-=1;return s;
+}
+function boxText(lines,b,fill,maxSize,stroke){
+  if(!Array.isArray(lines))lines=[lines];const n=lines.length,s=fitSize(lines,b,maxSize);
   const lh=Math.min(b[3]/n,s*1.18),y0=b[1]+b[3]/2-(n-1)*lh/2;
   lines.forEach((l,k)=>ftext(l,b[0]+b[2]/2,y0+k*lh,b[2]*.97,s,fill,stroke));
 }
+
 let curSkin='normal';
 function curMap(){return A.map[curSkin]||A.map.normal;}
 
 /* ---- arena ---- */
+const blurCache={};
+function backdropBlur(th,M){            // soft-focus copy of the backdrop, built once per map
+  const im=M.backdrop;if(!ok(im))return null;if(blurCache[th])return blurCache[th];
+  const sm=document.createElement('canvas');sm.width=Math.round(CW/6);sm.height=Math.round(CH/6);
+  const s=Math.max(sm.width/im.naturalWidth,sm.height/im.naturalHeight),w=im.naturalWidth*s,h=im.naturalHeight*s;
+  sm.getContext('2d').drawImage(im,(sm.width-w)/2,(sm.height-h)/2,w,h);
+  const big=document.createElement('canvas');big.width=CW;big.height=CH;const bx=big.getContext('2d');bx.imageSmoothingEnabled=true;bx.imageSmoothingQuality='high';bx.drawImage(sm,0,0,CW,CH);
+  return blurCache[th]=big;
+}
 function drawArena(){
-  const M=curMap();cover(M.backdrop);
+  const M=curMap(),R=S.R,bb=backdropBlur(curSkin,M);
+  if(bb)ctx.drawImage(bb,0,0);else cover(M.backdrop);
+  const g=ctx.createRadialGradient(AX,AY,380,AX,AY,1150);g.addColorStop(0,'rgba(8,4,20,0)');g.addColorStop(1,'rgba(8,4,20,.42)');
+  ctx.fillStyle=g;ctx.fillRect(0,0,CW,CH);
   ctx.save();ctx.translate(AX,AY);ctx.scale(ASC,ASC);
-  const R=S.R;
-  if(ok(M.floor))ctx.drawImage(M.floor,-R,-R,2*R,2*R);else{ctx.fillStyle='#2b2636';ctx.beginPath();ctx.arc(0,0,R,0,TAU);ctx.fill();}
+  const Ro=M.rim?R/(M.rim.meta.inner||.9):R+16;
+  ctx.save();ctx.shadowColor='rgba(0,0,0,.65)';ctx.shadowBlur=70;ctx.shadowOffsetY=34;ctx.fillStyle='#120a1c';ctx.beginPath();ctx.arc(0,0,Ro*.97,0,TAU);ctx.fill();ctx.restore();   // arena sits above the scene
+  const F=R*1.07;                                         // floor runs 7% under the rim so there is no gap between them
+  if(ok(M.floor))ctx.drawImage(M.floor,-F,-F,2*F,2*F);else{ctx.fillStyle='#2b2636';ctx.beginPath();ctx.arc(0,0,R,0,TAU);ctx.fill();}
   if(curSkin==='th_beetle'){   // sand storm direction shown on the floor
     ctx.save();ctx.beginPath();ctx.arc(0,0,R,0,TAU);ctx.clip();ctx.strokeStyle='rgba(255,240,200,.45)';ctx.lineWidth=3;ctx.lineCap='round';
     const ca=Math.cos(S.windA),sa=Math.sin(S.windA);
@@ -579,31 +599,41 @@ function drawHud(tk){
   let r=fitBox(H.round_plate,50,200,260,150);
   if(r)boxText('รอบ '+Math.min(S.round,CFG.rounds)+'/'+CFG.rounds,tbRect(H.round_plate,r,H.round_plate.meta.tb),INK,60);
   r=fitBox(H.map_banner,320,200,520,150);
-  if(r){const hm=H.map_banner,sx=r[2]/hm.naturalWidth,tb=hm.meta.tb,bx=r[0]+(tb[0]*.42)*sx,by=r[1]+r[3]*.5,br=r[3]*.31;
+  if(r){const hm=H.map_banner,sx=r[2]/hm.naturalWidth,sy=r[3]/hm.naturalHeight,tb=hm.meta.tb,sk=hm.meta.sock||[tb[0]*.42,hm.naturalHeight/2,hm.naturalHeight*.3],bx=r[0]+sk[0]*sx,by=r[1]+sk[1]*sy,br=sk[2]*sx*.97;
     if(ok(M.badge)){ctx.save();ctx.beginPath();ctx.arc(bx,by,br,0,TAU);ctx.clip();ctx.drawImage(M.badge,bx-br,by-br,br*2,br*2);ctx.restore();}
     boxText(THEMES[tk].name,tbRect(hm,r,tb),INK,64);}
   r=fitBox(H.alive_plate,850,200,190,160);
   if(r)boxText('เหลือ '+aliveCars().length,tbRect(H.alive_plate,r,H.alive_plate.meta.tb),INK,52);
 }
 const CATS=[
-  ['cat_turn',['GG หมุนซ้าย · TikTok หมุนขวา','หมุนแล้วล็อกเลย']],
-  ['cat_aim',['Rose พุ่งใส่คนใกล้สุด','ไลก์ = ล็อกทิศฟรี']],
-  ['cat_guard',['Love you โล่กันชน 1 ครั้ง',"You're awesome ฮีลเลือด"]],
-  ['cat_fight',['Doughnut กงจักรหมุน','Ice Cream แช่แข็งคู่ต่อสู้']],
-  ['cat_map',['Tiny Diny หนองบึง · Finger Heart ทะเลทราย','G.O.A.T. Busker ทุ่งหญ้า · Mishka Bear ไก่ชน','Hat and Mustache เบเบลด']],
-  ['cat_flip',['ล้มกระดาน!','ทุกคนตก คนส่งชนะคนเดียว']],
-  ['cat_free',['ไลก์ ล็อกทิศ','ติดตาม โจมตี ×2 · แชร์ พุ่งเร็ว']]
+  ['cat_turn',['GG = หมุนซ้าย','TikTok = หมุนขวา']],
+  ['cat_aim',['Rose = พุ่งใส่คนใกล้สุด','ไลก์ = ล็อกทิศฟรี']],
+  ['cat_guard',['Love you = โล่ 1 ครั้ง',"You're awesome = ฮีล"]],
+  ['cat_fight',['Doughnut = กงจักรหมุน','Ice Cream = แช่แข็ง']],
+  ['cat_map',['Tiny Diny = หนองบึง','Finger Heart = ทะเลทราย']],
+  ['cat_map',['G.O.A.T. Busker = ทุ่งหญ้า','Mishka Bear = ลานไก่ชน']],
+  ['cat_map',['Hat and Mustache = เบเบลด','ยอดของขวัญรวมมากสุดชนะ']],
+  ['cat_flip',['ล้มกระดาน!','ทุกคนตก คนส่งชนะ']],
+  ['cat_free',['ไลก์ = ล็อกทิศ','ติดตาม ×2 · แชร์ เร็วขึ้น']]
 ];
-const HOWTO=['เข้าไลฟ์ = ได้รถ','นับ 10 วิ ล็อกทิศ','ชน!','คันสุดท้ายชนะ'];
+const STRIP=[40,1290,890,290];
+let catSize=0;
+function calcCatSize(){
+  if(catSize)return catSize;let m=46;
+  for(const [k,lines] of CATS){const ci=A.ui.cats[k];if(!ok(ci))return 0;m=Math.min(m,fitSize(lines,tbRect(ci,fitRect(ci,...STRIP),ci.meta.tb),46));}
+  return catSize=m;
+}
+const HOWTO=[['เข้าไลฟ์','ได้รถทันที'],['กดใจเพื่อล็อกทิศทาง','ก่อนหมดเวลา 10 วิ'],['ชน!','รถทุกคันพุ่งพร้อมกัน'],['ตกขอบ = ออก','คันสุดท้ายชนะ']];
+function plate(x,y,w,h){ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,h,h*.3);ctx.fillStyle='#fdebc6';ctx.fill();ctx.lineWidth=4;ctx.strokeStyle='#7a3a5a';ctx.stroke();ctx.setLineDash([8,6]);ctx.lineWidth=2.5;ctx.strokeStyle='#e8a2ae';ctx.beginPath();ctx.roundRect(x+7,y+7,w-14,h-14,h*.24);ctx.stroke();ctx.restore();}
 function drawStrip(){
-  const X=40,Y=1290,Wd=890,Ht=290;
+  const [X,Y,Wd,Ht]=STRIP;
   if(S.round===1&&S.phase==='setup'){
     const hw=A.ui.howto,r=fitBox(hw,X,Y,Wd,Ht);
-    if(r)HOWTO.forEach((t,i)=>boxText(t,tbRect(hw,r,hw.meta.tbs[i]),INK,40));
+    if(r)HOWTO.forEach((lines,i)=>{const b=tbRect(hw,r,hw.meta.tbs[i],0,0),pw=r[2]/4*.94,ph=84,px=b[0]+b[2]/2-pw/2,py=b[1]-6;plate(px,py,pw,ph);boxText(lines,[px+14,py+12,pw-28,ph-24],INK,32);});
     return;
   }
-  const [k,lines]=CATS[Math.floor(S.time/5)%CATS.length],ci=A.ui.cats[k],r=fitBox(ci,X,Y,Wd,Ht);
-  if(r)boxText(lines,tbRect(ci,r,ci.meta.tb),INK,52);
+  const [k,lines]=CATS[Math.floor(S.time/5)%CATS.length],ci=A.ui.cats[k],r=fitBox(ci,X,Y,Wd,Ht),sz=calcCatSize();
+  if(r&&sz)boxText(lines,tbRect(ci,r,ci.meta.tb),INK,sz);
 }
 function drawClashBurst(){
   if(S.phase!=='clash'||S.clashT>1)return;
@@ -614,23 +644,26 @@ function drawClashBurst(){
 }
 function drawOver(){
   if(S.phase!=='over')return;
-  ctx.fillStyle='rgba(20,17,26,.8)';ctx.fillRect(0,0,CW,CH);
+  ctx.fillStyle='rgba(20,17,26,.82)';ctx.fillRect(0,0,CW,CH);
   const w=S.winner;
-  ftext(w?(S.flipped?'ล้มกระดานชนะ!':'ผู้ชนะ'):'ไม่มีผู้ชนะ',AX,440,860,120,'#ffd166','#6b2a3a');
+  ftext(w?(S.flipped?'ล้มกระดานชนะ!':'ผู้ชนะ'):'ไม่มีผู้ชนะ',AX,380,860,120,'#ffd166','#6b2a3a');
   if(!w)return;
-  const fr=A.ui.frame,m=fr.meta||{},CY=860,D=470;
+  const fr=A.ui.frame,m=fr.meta||{},CY=880,D=470;
   ctx.save();ctx.translate(AX,CY);
   const rad=(m.hr||0)>0?D*m.hr/m.w:D*.36;drawAvatarDisc(w,rad);
   if(ok(fr)){const k=D/m.w;ctx.drawImage(fr,-(m.hx||m.w/2)*k,-(m.hy||m.h/2)*k,m.w*k,m.h*k);}
   ctx.restore();
-  const cr=A.ui.callouts.crown;if(ok(cr))imgC(cr,AX,CY-D*.58,240,240*cr.naturalHeight/cr.naturalWidth);
-  const wr=A.ui.callouts.winner_ribbon,rb=fitBox(wr,AX-420,1120,840,260);
-  if(rb)boxText(w.name,tbRect(wr,rb,wr.meta.tb),INK,80);
-  ftext('เลือดเหลือ '+Math.round(w.hp)+'  ·  ชนตก '+w.kills,AX,1440,820,44,'#f4efe4','#14111a');
+  const cr=A.ui.callouts.crown;if(ok(cr))imgC(cr,AX,CY-D*.62,220,220*cr.naturalHeight/cr.naturalWidth);
+  // the winner's name goes on the yellow band, below the trophy, with room on every side
+  const wr=A.ui.callouts.winner_ribbon,rb=fitBox(wr,AX-490,1160,980,300);
+  if(rb)boxText(w.name,tbRect(wr,rb,wr.meta.tb,.08,.06),INK,84);
+  const sv=Math.max(0,((w.died||S.endT||S.time)-w.born)),mm=Math.floor(sv/60),ss=String(Math.floor(sv%60)).padStart(2,'0');
+  ftext('ชนไป '+w.hits+' ครั้ง',AX,1540,820,52,'#f4efe4','#14111a');
+  ftext('อยู่รอด '+mm+':'+ss+' นาที',AX,1610,820,52,'#f4efe4','#14111a');
 }
 function draw(){
   ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,CW,CH);ctx.fillStyle='#17141d';ctx.fillRect(0,0,CW,CH);
-  const tk=S.phase==='setup'?leadTheme():S.theme;curSkin=tk;
+  const tk=S.phase==='setup'?leadTheme():S.theme;curSkin=tk;ASC=arenaScale(tk);
   drawArena();drawCountdown();
   ctx.save();ctx.translate(AX,AY);ctx.scale(ASC,ASC);
   S.items.forEach(drawItem);
