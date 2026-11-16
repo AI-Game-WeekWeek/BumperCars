@@ -773,7 +773,7 @@ function drawOver(){
   if(rb)boxText(w.name,tbRect(wr,rb,wr.meta.tb,.08,.06),INK,84);
   const sv=Math.max(0,((w.died||S.endT||S.time)-w.born)),mm=Math.floor(sv/60),ss=String(Math.floor(sv%60)).padStart(2,'0');
   ftext('ชนไป '+w.hits+' ครั้ง',AX,1540,820,52,'#f4efe4','#14111a');
-  ftext('อยู่รอด '+mm+':'+ss+' นาที',AX,1610,820,52,'#f4efe4','#14111a');
+  ftext('อยู่รอด '+(mm>0?mm+' นาที '+ss+' วินาที':Math.floor(sv)+' วินาที'),AX,1610,820,52,'#f4efe4','#14111a');
 }
 function draw(){
   ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,CW,CH);ctx.fillStyle='#17141d';ctx.fillRect(0,0,CW,CH);
