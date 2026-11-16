@@ -21,3 +21,14 @@ text area of each banner, and embeds all of it. Text is always placed inside tho
 
 Screen layout (1080×1920): HUD plates at the top, arena centred at (510, 800) with a 880 px diameter, gift banner or
 how-to strip at the bottom. Keep the very top and bottom clear of important things: the app covers them.
+
+## Test page and layout editor (built into the page, not on stream)
+
+Open `BumperCars.html` normally (without `?stage=1`). Under the stage you get:
+- **ปุ่มทดสอบทั้งหมด**: a button for every gift, like / follow / share, joins, jump to round, force clash, cut the floor,
+  end the game, kill a player, give an item, force a map, screen size presets, and play all sounds.
+- **จัดวาง UI**: tick "เปิดโหมดจัดวาง", drag a block to move it, drag its bottom-right corner to resize, or type numbers;
+  every text can be changed. Changes are saved in the browser. "คัดลอกค่าที่จัดไว้ (JSON)" copies them: save that as
+  `game/layout.json` and run `python3 tools/build_game.py` to make them the default in `dist/BumperCars.html`
+  (or open the game with `?layout=<base64 of the JSON>`).
+- `?stage=1` shows only the game, filling the window (any phone size; the design is 1080x2400 and is scaled and centred).

@@ -177,6 +177,9 @@ def main():
         x = int(min(max(cx * w - s / 2, 0), w - s))
         y = int(min(max(cy * h - s / 2, 0), h - s))
         out['bots'].append(enc(im.crop((x, y, x + s, y + s)).resize((96, 96), Image.LANCZOS), 'JPEG', 82))
+    lp = ROOT + '/game/layout.json'      # optional: default positions and texts saved from the in-page editor
+    if os.path.exists(lp):
+        out['layout'] = json.load(open(lp, encoding='utf-8'))
     src = open(ROOT + '/game/game.src.html', encoding='utf-8').read()
     html = src.replace('__ASSETS__', json.dumps(out, ensure_ascii=False, separators=(',', ':')))
     os.makedirs(ROOT + '/dist', exist_ok=True)
