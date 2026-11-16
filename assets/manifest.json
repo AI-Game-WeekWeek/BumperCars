@@ -1,0 +1,526 @@
+{
+ "bey/backdrop.png": [
+  945,
+  1676
+ ],
+ "bey/badge.png": [
+  1258,
+  1218
+ ],
+ "bey/cars/car_1.png": [
+  497,
+  495
+ ],
+ "bey/cars/car_2.png": [
+  477,
+  475
+ ],
+ "bey/cars/car_3.png": [
+  496,
+  495
+ ],
+ "bey/cars/car_4.png": [
+  497,
+  496
+ ],
+ "bey/cars/car_5.png": [
+  477,
+  475
+ ],
+ "bey/cars/car_6.png": [
+  477,
+  475
+ ],
+ "bey/floor.png": [
+  1258,
+  1223
+ ],
+ "bey/props/bolts.png": [
+  440,
+  447
+ ],
+ "bey/props/gear.png": [
+  365,
+  351
+ ],
+ "bey/props/lightstrips.png": [
+  414,
+  378
+ ],
+ "bey/props/orb.png": [
+  491,
+  459
+ ],
+ "bey/props/ripcord.png": [
+  513,
+  476
+ ],
+ "bey/props/spark.png": [
+  365,
+  405
+ ],
+ "bey/rim.png": [
+  1258,
+  1258
+ ],
+ "cock/backdrop.png": [
+  945,
+  1676
+ ],
+ "cock/badge.png": [
+  1258,
+  1230
+ ],
+ "cock/cars/car_1.png": [
+  508,
+  474
+ ],
+ "cock/cars/car_2.png": [
+  496,
+  416
+ ],
+ "cock/cars/car_3.png": [
+  503,
+  474
+ ],
+ "cock/cars/car_4.png": [
+  508,
+  460
+ ],
+ "cock/cars/car_5.png": [
+  496,
+  416
+ ],
+ "cock/cars/car_6.png": [
+  496,
+  416
+ ],
+ "cock/floor.png": [
+  1250,
+  1215
+ ],
+ "cock/props/corn.png": [
+  451,
+  331
+ ],
+ "cock/props/drum.png": [
+  397,
+  397
+ ],
+ "cock/props/feathers.png": [
+  449,
+  497
+ ],
+ "cock/props/flag.png": [
+  440,
+  504
+ ],
+ "cock/props/rope.png": [
+  440,
+  359
+ ],
+ "cock/props/waterbowl.png": [
+  487,
+  435
+ ],
+ "cock/rim.png": [
+  1258,
+  1258
+ ],
+ "desert/backdrop.png": [
+  945,
+  1676
+ ],
+ "desert/badge.png": [
+  1195,
+  1172
+ ],
+ "desert/cars/car_1.png": [
+  503,
+  420
+ ],
+ "desert/cars/car_2.png": [
+  502,
+  421
+ ],
+ "desert/cars/car_3.png": [
+  504,
+  420
+ ],
+ "desert/cars/car_4.png": [
+  505,
+  420
+ ],
+ "desert/cars/car_5.png": [
+  503,
+  420
+ ],
+ "desert/cars/car_6.png": [
+  505,
+  420
+ ],
+ "desert/floor.png": [
+  1258,
+  1241
+ ],
+ "desert/props/bush.png": [
+  427,
+  460
+ ],
+ "desert/props/cactus.png": [
+  461,
+  464
+ ],
+ "desert/props/pot.png": [
+  429,
+  509
+ ],
+ "desert/props/rocks.png": [
+  434,
+  469
+ ],
+ "desert/props/scarab.png": [
+  495,
+  523
+ ],
+ "desert/props/tumbleweed.png": [
+  451,
+  451
+ ],
+ "desert/rim.png": [
+  1258,
+  1258
+ ],
+ "fair/backdrop.png": [
+  945,
+  1676
+ ],
+ "fair/badge.png": [
+  1249,
+  1203
+ ],
+ "fair/cars/car_1.png": [
+  506,
+  463
+ ],
+ "fair/cars/car_2.png": [
+  489,
+  448
+ ],
+ "fair/cars/car_3.png": [
+  500,
+  463
+ ],
+ "fair/cars/car_4.png": [
+  506,
+  501
+ ],
+ "fair/cars/car_5.png": [
+  489,
+  448
+ ],
+ "fair/cars/car_6.png": [
+  490,
+  448
+ ],
+ "fair/floor.png": [
+  1250,
+  1197
+ ],
+ "fair/props/balloons.png": [
+  461,
+  490
+ ],
+ "fair/props/bulbstring.png": [
+  512,
+  394
+ ],
+ "fair/props/flag.png": [
+  357,
+  406
+ ],
+ "fair/props/popcorn.png": [
+  420,
+  390
+ ],
+ "fair/props/teddy.png": [
+  351,
+  436
+ ],
+ "fair/props/ticket.png": [
+  498,
+  459
+ ],
+ "frog/backdrop.png": [
+  945,
+  1676
+ ],
+ "frog/badge.png": [
+  1258,
+  1239
+ ],
+ "frog/cars/car_1.png": [
+  507,
+  476
+ ],
+ "frog/cars/car_2.png": [
+  502,
+  436
+ ],
+ "frog/cars/car_3.png": [
+  510,
+  476
+ ],
+ "frog/cars/car_4.png": [
+  507,
+  476
+ ],
+ "frog/cars/car_5.png": [
+  502,
+  435
+ ],
+ "frog/cars/car_6.png": [
+  501,
+  435
+ ],
+ "frog/floor.png": [
+  1253,
+  1221
+ ],
+ "frog/props/leaf.png": [
+  453,
+  399
+ ],
+ "frog/props/lilypad.png": [
+  461,
+  486
+ ],
+ "frog/props/log.png": [
+  472,
+  475
+ ],
+ "frog/props/mushroom.png": [
+  314,
+  350
+ ],
+ "frog/props/reed.png": [
+  377,
+  446
+ ],
+ "frog/props/tadpole.png": [
+  326,
+  246
+ ],
+ "frog/rim.png": [
+  1258,
+  1258
+ ],
+ "pig/backdrop.png": [
+  945,
+  1676
+ ],
+ "pig/badge.png": [
+  1258,
+  1258
+ ],
+ "pig/cars/car_1.png": [
+  505,
+  463
+ ],
+ "pig/cars/car_2.png": [
+  499,
+  420
+ ],
+ "pig/cars/car_3.png": [
+  511,
+  463
+ ],
+ "pig/cars/car_4.png": [
+  504,
+  475
+ ],
+ "pig/cars/car_5.png": [
+  499,
+  420
+ ],
+ "pig/cars/car_6.png": [
+  499,
+  420
+ ],
+ "pig/floor.png": [
+  1234,
+  1193
+ ],
+ "pig/props/apple.png": [
+  454,
+  464
+ ],
+ "pig/props/bucket.png": [
+  422,
+  388
+ ],
+ "pig/props/corn.png": [
+  403,
+  374
+ ],
+ "pig/props/daisies.png": [
+  480,
+  471
+ ],
+ "pig/props/haystack.png": [
+  491,
+  470
+ ],
+ "pig/props/mud.png": [
+  437,
+  403
+ ],
+ "pig/rim.png": [
+  1258,
+  1229
+ ],
+ "ui/avatar_frame.png": [
+  1258,
+  1258
+ ],
+ "ui/badges/attack_x2.png": [
+  862,
+  743
+ ],
+ "ui/badges/speed.png": [
+  850,
+  819
+ ],
+ "ui/callouts/crown.png": [
+  519,
+  483
+ ],
+ "ui/callouts/starburst.png": [
+  871,
+  530
+ ],
+ "ui/callouts/winner_ribbon.png": [
+  1451,
+  444
+ ],
+ "ui/cat_aim.png": [
+  2158,
+  630
+ ],
+ "ui/cat_fight.png": [
+  2167,
+  662
+ ],
+ "ui/cat_flip.png": [
+  2166,
+  684
+ ],
+ "ui/cat_free.png": [
+  2172,
+  636
+ ],
+ "ui/cat_guard.png": [
+  2176,
+  652
+ ],
+ "ui/cat_map.png": [
+  2175,
+  636
+ ],
+ "ui/cat_turn.png": [
+  2139,
+  637
+ ],
+ "ui/digits/0.png": [
+  354,
+  463
+ ],
+ "ui/digits/1.png": [
+  257,
+  355
+ ],
+ "ui/digits/2.png": [
+  299,
+  358
+ ],
+ "ui/digits/3.png": [
+  282,
+  361
+ ],
+ "ui/digits/4.png": [
+  329,
+  469
+ ],
+ "ui/digits/5.png": [
+  331,
+  491
+ ],
+ "ui/digits/6.png": [
+  315,
+  355
+ ],
+ "ui/digits/7.png": [
+  292,
+  358
+ ],
+ "ui/digits/8.png": [
+  318,
+  372
+ ],
+ "ui/digits/9.png": [
+  301,
+  369
+ ],
+ "ui/effects/heal.png": [
+  406,
+  393
+ ],
+ "ui/effects/hit_spark.png": [
+  497,
+  474
+ ],
+ "ui/effects/ice.png": [
+  466,
+  466
+ ],
+ "ui/effects/poof.png": [
+  440,
+  381
+ ],
+ "ui/effects/shield.png": [
+  493,
+  373
+ ],
+ "ui/effects/speed_lines.png": [
+  509,
+  426
+ ],
+ "ui/howto_strip.png": [
+  2070,
+  650
+ ],
+ "ui/hud/alive_plate.png": [
+  410,
+  572
+ ],
+ "ui/hud/map_banner.png": [
+  1201,
+  450
+ ],
+ "ui/hud/round_plate.png": [
+  453,
+  760
+ ],
+ "ui/items/heal.png": [
+  496,
+  627
+ ],
+ "ui/items/range.png": [
+  576,
+  763
+ ],
+ "ui/items/speed.png": [
+  553,
+  891
+ ]
+}
