@@ -607,12 +607,6 @@ function drawArena(){
   ctx.save();ctx.shadowColor='rgba(0,0,0,.65)';ctx.shadowBlur=70;ctx.shadowOffsetY=34;ctx.fillStyle='#120a1c';ctx.beginPath();ctx.arc(0,0,R*.98,0,TAU);ctx.fill();ctx.restore();   // arena sits above the scene
   if(R<R0-1){ctx.fillStyle='#2a1826';ctx.beginPath();ctx.arc(0,18,R,0,TAU);ctx.fill();}   // thickness of the cut edge
   ctx.save();ctx.beginPath();ctx.arc(0,0,R,0,TAU);ctx.clip();drawFloorArt(M,R>=R0-1);ctx.restore();   // the floor keeps its size; only what is inside the red line is left
-  if(curSkin==='th_beetle'){   // sand storm direction shown on the floor
-    ctx.save();ctx.beginPath();ctx.arc(0,0,R,0,TAU);ctx.clip();ctx.strokeStyle='rgba(255,240,200,.45)';ctx.lineWidth=3;ctx.lineCap='round';
-    const ca=Math.cos(S.windA),sa=Math.sin(S.windA);
-    for(let i=0;i<12;i++){const a=i*2.399,r=Math.sqrt((i+.5)/12)*(R-30),x=Math.cos(a)*r,y=Math.sin(a)*r;ctx.beginPath();ctx.moveTo(x-ca*18,y-sa*18);ctx.lineTo(x+ca*18,y+sa*18);ctx.moveTo(x+ca*18,y+sa*18);ctx.lineTo(x+ca*8-sa*6,y+sa*8+ca*6);ctx.moveTo(x+ca*18,y+sa*18);ctx.lineTo(x+ca*8+sa*6,y+sa*8-ca*6);ctx.stroke();}
-    ctx.restore();
-  }
   if(S.phase==='setup'&&S.round<CFG.rounds){   // where the edge will be next round: plain deep-red dashes
     ctx.save();ctx.setLineDash([16,10]);ctx.lineDashOffset=-S.time*20;ctx.beginPath();ctx.arc(0,0,R_of(S.round+1),0,TAU);
     ctx.lineWidth=7;ctx.strokeStyle='#c1121f';ctx.stroke();ctx.restore();
@@ -806,7 +800,14 @@ function drawQueue(){   // profiles of everyone who joined during this game: the
   ftext(n+' คน'+(show<n?' (แสดง '+show+')':''),x+w/2,y+h-18,w-20,22,'#ffd166');
   ctx.restore();
 }
-function drawPanels(){drawPanel(LEFTG,LAY.left,null,0);drawPanel(RIGHTG,LAY.right,TXT.rightTitle,0);drawFreeFrame();drawQueue();}
+function drawMapNote(){   // what the chosen map does, written under the arena
+  if(!activeMapKey)return;const it=RIGHTG.find(r=>r.k===activeMapKey);if(!it)return;
+  const A_=LAY.arena,txt='แมพ'+it.t+' · '+it.e,sz=Math.max(24,Math.min(44,A_.w*.045))*A_.fs/100;
+  ctx.save();ctx.font='500 '+sz+'px '+FONT;const w=Math.min(CW-40,ctx.measureText(txt).width+sz*1.8),h=sz*1.9,x=A_.x+A_.w/2-w/2,y=A_.y+A_.h+14;
+  ctx.beginPath();ctx.roundRect(x,y,w,h,h/2);ctx.fillStyle='rgba(38,22,56,.94)';ctx.fill();ctx.lineWidth=4;ctx.strokeStyle='#fdebc6';ctx.stroke();ctx.restore();
+  ftext(txt,x+w/2,y+h/2,w-sz,sz,'#fff6dc');
+}
+function drawPanels(){drawPanel(LEFTG,LAY.left,null,0);drawPanel(RIGHTG,LAY.right,TXT.rightTitle,0);drawFreeFrame();drawQueue();drawMapNote();}
 const HOWTO=[['เข้าไลฟ์','ได้รถ'],['กดใจ','ล็อกทิศ','ก่อน 10 วิ'],['ชน!','พร้อมกัน'],['อยู่รอด','= ชนะ']];
 function plate(x,y,w,h){ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,h,h*.3);ctx.fillStyle='#fdebc6';ctx.fill();ctx.lineWidth=4;ctx.strokeStyle='#7a3a5a';ctx.stroke();ctx.setLineDash([8,6]);ctx.lineWidth=2.5;ctx.strokeStyle='#e8a2ae';ctx.beginPath();ctx.roundRect(x+7,y+7,w-14,h-14,h*.24);ctx.stroke();ctx.restore();}
 function drawHowto(){
