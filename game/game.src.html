@@ -425,7 +425,7 @@ function clashStep(h){
     c.x+=c.vx*h;c.y+=c.vy*h;const f=Math.exp(-S.fr*h);c.vx*=f;c.vy*=f;
     for(const k in c.cd)c.cd[k]-=h;
     for(let i=S.items.length-1;i>=0;i--){const it=S.items[i];
-      if(Math.hypot(it.x-c.x,it.y-c.y)<CR+10){
+      if(Math.hypot(it.x-c.x,it.y-c.y)<CR+10){c.got=c.got||{};c.got[it.type]=(c.got[it.type]||0)+1;
         if(it.type==='speed'){fx('speed_lines',c.x,c.y,CR*3.4);c.vx*=1.6;c.vy*=1.6;log(c.name+' ได้ยาความเร็ว');}
         else if(it.type==='heal'){fx('heal',c.x,c.y,CR*2.8);c.hp=Math.min(100,c.hp+25);log(c.name+' ได้ฮีล +25');}
         else{c.gear=Math.min(3,c.gear+1);log(c.name+' ได้ระยะโจมตี');}
@@ -649,7 +649,14 @@ function drawCar(c){
     ctx.save();ctx.translate(c.x,c.y);ctx.scale(u,u);
     const r=CFG.carR,w=34,by=r+6+c.gear*12;ctx.fillStyle='#14111a';ctx.fillRect(-w/2,by,w,5);
     ctx.fillStyle=c.hp>50?C.cool:c.hp>25?C.bulb:C.hot;ctx.fillRect(-w/2,by,w*c.hp/100,5);
-    if(CR>=9){ctx.font='500 12px "Noto Sans Thai",sans-serif';ctx.textAlign='center';ctx.textBaseline='top';ctx.lineWidth=3;ctx.strokeStyle='#14111a';ctx.strokeText(c.name,0,by+8);ctx.fillStyle=C.fg;ctx.fillText(c.name,0,by+8);}
+    if(CR>=9){ctx.font='500 12px "Noto Sans Thai",sans-serif';ctx.textAlign='center';ctx.textBaseline='top';ctx.lineWidth=3;ctx.strokeStyle='#14111a';ctx.strokeText(c.name,0,by+8);ctx.fillStyle=C.fg;ctx.fillText(c.name,0,by+8);
+      if(c.got){   // small pictures of the items this player has picked up, right after the name
+        let x=ctx.measureText(c.name).width/2+5;const isz=17;
+        for(const k of ['speed','heal','range']){const n=c.got[k];if(!n)continue;const im=A.ui.items[k];if(!ok(im))continue;
+          ctx.drawImage(im,x,by+7,isz,isz*im.naturalHeight/im.naturalWidth);x+=isz+1;
+          if(n>1){ctx.font='700 11px "Noto Sans Thai",sans-serif';ctx.textAlign='left';ctx.lineWidth=3;ctx.strokeStyle='#14111a';ctx.strokeText('×'+n,x,by+18);ctx.fillStyle='#ffd166';ctx.fillText('×'+n,x,by+18);x+=18;ctx.font='500 12px "Noto Sans Thai",sans-serif';ctx.textAlign='center';}
+          x+=3;}
+      }}
     ctx.restore();
   }
 }
@@ -733,7 +740,7 @@ function drawFreeFrame(){   // like / follow / share: own frame, centre top, jus
   ctx.restore();
 }
 function drawPanels(){drawPanel(LEFTG,PNL.lx,null,0);drawPanel(RIGHTG,PNL.rx,'ล็อกแมพ',0,{y:76,h:450});drawFreeFrame();}
-const HOWTO=[['เข้าไลฟ์','ได้รถ'],['กดใจ','ล็อกทิศ','ก่อน 10 วิ'],['ชน!','พร้อมกัน'],['ตกขอบ=ออก','คันสุดท้าย','ชนะ']];
+const HOWTO=[['เข้าไลฟ์','ได้รถ'],['กดใจ','ล็อกทิศ','ก่อน 10 วิ'],['ชน!','พร้อมกัน'],['อยู่รอด','= ชนะ']];
 function plate(x,y,w,h){ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,h,h*.3);ctx.fillStyle='#fdebc6';ctx.fill();ctx.lineWidth=4;ctx.strokeStyle='#7a3a5a';ctx.stroke();ctx.setLineDash([8,6]);ctx.lineWidth=2.5;ctx.strokeStyle='#e8a2ae';ctx.beginPath();ctx.roundRect(x+7,y+7,w-14,h-14,h*.24);ctx.stroke();ctx.restore();}
 function drawHowto(){
   const hw=A.ui.howto;if(!ok(hw))return;
