@@ -142,6 +142,10 @@ def main():
             d = with_hole(m + '/rim.png', maxw=640)
             d['inner'] = d['hr'] / (d['w'] / 2)
             e['rim'] = d
+        if m == 'bey':
+            # the stadium floor already has its own thick ring: no extra outer frame (it made the map look small)
+            e['rim'] = None
+            e['floorInner'] = 0.78      # radius of the playable dish / radius of the floor picture
         out['maps'][m] = e
     u = out['ui']
     u['items'] = {k: asset('ui/items/%s.png' % k, maxw=128)[0] for k in ['speed', 'heal', 'range']}
@@ -156,12 +160,12 @@ def main():
     u['hud'] = {'round_plate': with_tb('ui/hud/round_plate.png', maxw=300),
                 'map_banner': mb,
                 'alive_plate': with_tb('ui/hud/alive_plate.png', maxw=280)}
-    u['cats'] = {k: with_tb('ui/%s.png' % k, bmin=(40 if k == 'cat_flip' else 140), maxw=900) for k in ['cat_turn', 'cat_aim', 'cat_guard', 'cat_fight', 'cat_map', 'cat_flip', 'cat_free']}
     u['howto'] = with_tb('ui/howto_strip.png', n=4, maxw=1100)
     u['avatar_frame'] = with_hole('ui/avatar_frame.png', maxw=520)
     gift_files = {'gg': 'GG.png', 'tiktok': 'TikTok.png', 'rose': 'Rose.png', 'donut': 'Doughnut.png', 'ice': 'Ice Cream Cone.png',
                   'love': 'Love you so much.png', 'awesome': "You're awesome.png", 'th_frog': 'Tiny Diny.png',
-                  'th_beetle': 'Finger Heart.png', 'th_pig': 'G.O.A.T. Busker.png', 'th_cock': 'Mishka Bear.png', 'th_bey': 'Hat and Mustache.png'}
+                  'th_beetle': 'Finger Heart.png', 'th_pig': 'G.O.A.T. Busker.png', 'th_cock': 'Mishka Bear.png', 'th_bey': 'Hat and Mustache.png',
+                  'flip': 'Boxing Gloves.png'}
     for k, f in gift_files.items():
         im = load(ROOT + '/' + f, maxw=96)
         out['gifts'][k] = enc(im)

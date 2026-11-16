@@ -222,7 +222,7 @@ const ASSETS=__ASSETS__;
 const IMG=ASSETS.gifts;
 const $=s=>document.querySelector(s);
 const TAU=Math.PI*2, DEG=Math.PI/180;
-const CFG={rounds:5,count:10,R0:270,R1:85,carR:30,clashMax:6,slide:1.1,friction:1.5,spin:2.2,maxCars:20};
+const CFG={rounds:5,count:10,R0:270,R1:85,carR:46,clashMax:6,slide:1.1,friction:1.5,spin:2.2,maxCars:20};
 const C={bg:'#17141d',floor:'#2b2636',bulb:'#ffbd2e',hot:'#ff5470',cool:'#37d3bb',fg:'#f4efe4',line:'#3b3447'};
 const NAMES=['พี่ต้น','น้องมิ้นท์','เจ๊หมวย','ลุงแมว','ป้าพลอย','บอลหล่อ','แพรวา','น้องบัว','ตี๋เล็ก','หนูนา','ครูเอ','มายด์','เก่งกาจ','ฟ้าใส','โอ๊ตตี้','ก้อยยี่','นายหมี','เจนจิ','พลอยชมพู','ต้นกล้า','ขวัญใจ','ปุ๊กกี้','แจ็คกี้','มะนาว'];
 const GIFTS=[
@@ -250,7 +250,7 @@ GIFTS.push(
   {id:'th_cock',name:'Mishka Bear',img:ASSETS.gifts.th_cock,desc:'แมพลานไก่ชน: ขอบเด้ง ไม่มีใครตกขอบ'},
   {id:'th_bey',name:'Hat and Mustache',img:ASSETS.gifts.th_bey,desc:'แมพเบเบลด: ทุกคนเป็นลูกข่าง พื้นลื่น'}
 );
-GIFTS.push({id:'flip',name:'ล้มกระดาน',img:svg('<g transform="rotate(-25 36 40)"><rect x="12" y="30" width="48" height="10" rx="3" fill="#8a5a38"/><rect x="18" y="40" width="5" height="18" fill="#6b4328"/><rect x="49" y="40" width="5" height="18" fill="#6b4328"/></g><circle cx="52" cy="14" r="5" fill="#ff5470"/><circle cx="22" cy="12" r="4" fill="#ffbd2e"/><circle cx="62" cy="30" r="3" fill="#37d3bb"/>'),desc:'ทุกคนตกรอบ ผู้ชนะคือคนส่งคนเดียว'});
+GIFTS.push({id:'flip',name:'Boxing Gloves',img:ASSETS.gifts.flip,desc:'ทุกคนตกรอบ ผู้ชนะคือคนส่งคนเดียว'});
 const imgs={};
 GIFTS.forEach(g=>{const i=new Image();i.src=g.img;imgs[g.id]=i;});
 
@@ -260,7 +260,7 @@ const viewers=[]; let nextId=1, amt=1, simT=1, joinT=5;
 let CR=CFG.carR, logDirty=false, whoDirty=false;
 S.votes={};S.theme='normal';S.fr=CFG.friction;S.lastTheme='';
 function leadTheme(){let best='normal',bv=0;for(const k in S.votes){const v=S.votes[k];if(v>bv||(v===bv&&v>0&&k===S.lastTheme)){best=k;bv=v;}}return best;}
-function setCR(n){CR=Math.max(3,Math.min(CFG.carR,200/Math.sqrt(Math.max(1,n))));}
+function setCR(n){CR=Math.max(3,Math.min(CFG.carR,200/Math.sqrt(Math.max(1,n)),.44*S.R/Math.sqrt(Math.max(1,n))));}
 
 function R_of(r){return CFG.R0+(CFG.R1-CFG.R0)*(r-1)/(CFG.rounds-1);}
 function initial(n){const m=n.match(/[ก-ฮA-Za-z0-9]/);return m?m[0]:'?';}
@@ -285,7 +285,7 @@ function ensureBots(addCars=true){
     const used=new Set(bs.map(b=>b.name)),cand=BOTS.filter(x=>!used.has(x.name)),d=cand[Math.floor(Math.random()*cand.length)];
     const v={id:nextId++,name:d.name,hue:Math.floor(Math.random()*360),ini:initial(d.name),bot:true,img:d.img};
     viewers.push(v);bs.push(v);
-    if(addCars&&S.phase==='setup')S.cars.push(mkCar(v));
+    if(addCars&&S.phase==='setup'){S.cars.push(mkCar(v));separateAll();}
   }
 }
 function newViewer(){
@@ -293,14 +293,12 @@ function newViewer(){
   const v={id:nextId++,name,hue:Math.floor(Math.random()*360)}; v.ini=initial(name); viewers.push(v); return v;
 }
 function mkCar(v){
-  let x=0,y=0;
-  for(let i=0;i<(S.cars.length>150?3:40);i++){const a=Math.random()*TAU, r=Math.sqrt(Math.random())*(S.R-CR*2); x=Math.cos(a)*r; y=Math.sin(a)*r;
-    if(S.cars.every(c=>!c.alive||Math.hypot(c.x-x,c.y-y)>CR*2.6))break;}
+  const sp=freeSpot(),x=sp[0],y=sp[1];
   return {id:v.id,name:v.name,hue:v.hue,ini:v.ini,img:v.img,bot:!!v.bot,botT:v.bot?1+Math.random()*7:0,x,y,vx:0,vy:0,hp:100,alive:true,fall:0,head:Math.random()*TAU,locked:false,lockNearest:false,atk:1,spd:1,gear:0,shield:0,delay:0,launchIn:0,pv:null,cd:{},flash:0,kills:0,hits:0,born:S.time,died:0};
 }
 function joinViewer(v){
   
-  if(S.phase==='setup'){setCR(aliveCars().length+1);S.cars.push(mkCar(v));log(v.name+' เข้าไลฟ์ ได้รถ');}
+  if(S.phase==='setup'){setCR(aliveCars().length+1);S.cars.push(mkCar(v));separateAll();log(v.name+' เข้าไลฟ์ ได้รถ');}
   else{S.pending.push(v);log(v.name+' เข้าไลฟ์ รอรอบหน้า');}
   ensureBots();
   renderWho();
@@ -313,14 +311,34 @@ function spawnItems(){
 function newGame(){
   S.votes={};S.theme='normal';S.fr=CFG.friction;S.lastTheme='';S.flipped=false;S.windA=Math.random()*TAU;S.round=1;S.R=CFG.R0;S.cars=[];S.items=[];S.parts=[];S.winner=null;S.phase='setup';S.t=CFG.count;
   S.pending=[];S.fx=[];
-  ensureBots(false);setCR(viewers.length);viewers.forEach(v=>S.cars.push(mkCar(v)));
+  ensureBots(false);setCR(viewers.length);viewers.forEach(v=>S.cars.push(mkCar(v)));separateAll();
   spawnItems(); log('เริ่มเกมใหม่'); renderWho();
 }
 function startSetup(){
   S.round++;S.windA=Math.random()*TAU;S.votes={};S.theme='normal';S.fr=CFG.friction;S.lastTheme='';
   S.cars.forEach(c=>{if(c.alive){c.locked=false;c.lockNearest=false;c.atk=1;c.spd=1;c.delay=0;c.launchIn=0;c.vx=c.vy=0;c.cd={};if(c.bot)c.botT=1+Math.random()*7;}});
-  setCR(aliveCars().length+S.pending.length);S.pending.splice(0).forEach(v=>S.cars.push(mkCar(v)));
+  setCR(aliveCars().length+S.pending.length);S.pending.splice(0).forEach(v=>S.cars.push(mkCar(v)));separateAll();
   S.phase='setup';S.t=CFG.count;ensureBots();spawnItems();renderWho();log('รอบ '+S.round+' เริ่ม แช่แข็งแล้วล็อกทิศทาง');
+}
+function freeSpot(){   // best of many random spots: the one farthest from every car already on the floor
+  const R=Math.max(10,S.R-CR*1.6),alive=S.cars.filter(c=>c.alive),tries=alive.length>200?8:48;let best=[0,0],bd=-1;
+  for(let i=0;i<tries;i++){const a=Math.random()*TAU,r=Math.sqrt(Math.random())*R,x=Math.cos(a)*r,y=Math.sin(a)*r;let d=1e9;
+    for(const c of alive){const dd=Math.hypot(c.x-x,c.y-y);if(dd<d){d=dd;if(d<=bd)break;}}
+    if(d>bd){bd=d;best=[x,y];if(bd>CR*2.7)break;}}
+  return best;
+}
+function separateAll(){   // nobody may start a round on top of someone else
+  const L=aliveCars();if(L.length<2)return;
+  for(let it=0;it<40;it++){
+    const cs=CR*2.4,grid=new Map();let moved=0;
+    for(let i=0;i<L.length;i++){const c=L[i];c.gi=i;const k=(Math.floor(c.x/cs)+500)*1000+Math.floor(c.y/cs)+500;let a=grid.get(k);if(!a)grid.set(k,a=[]);a.push(c);}
+    for(const c of L){const ix=Math.floor(c.x/cs)+500,iy=Math.floor(c.y/cs)+500;
+      for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++){const a=grid.get((ix+dx)*1000+iy+dy);if(!a)continue;
+        for(const o of a){if(o.gi<=c.gi)continue;let ddx=o.x-c.x,ddy=o.y-c.y,d=Math.hypot(ddx,ddy);const min=CR*2.1;
+          if(d<min){if(d<.01){const q=Math.random()*TAU;ddx=Math.cos(q);ddy=Math.sin(q);d=1;}const push=(min-d)/2+.1;ddx/=d;ddy/=d;c.x-=ddx*push;c.y-=ddy*push;o.x+=ddx*push;o.y+=ddy*push;moved++;}}}}
+    const lim=Math.max(10,S.R-CR*(it<30?.8:.3));for(const c of L){const dd=Math.hypot(c.x,c.y);if(dd>lim){c.x*=lim/dd;c.y*=lim/dd;}}
+    if(!moved)break;
+  }
 }
 function nearestEnemy(c){let b=null,bd=1e9;for(const o of aliveCars()){if(o===c)continue;const d=Math.hypot(o.x-c.x,o.y-c.y);if(d<bd){bd=d;b=o;}}return b;}
 function burst(x,y,hue,n=10){if(S.parts.length>300)return;for(let i=0;i<n;i++){const a=Math.random()*TAU,s=60+Math.random()*140;S.parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,l:.5,hue});}}
@@ -411,7 +429,7 @@ function clashStep(h){
         S.items.splice(i,1);}}
     const dd=Math.hypot(c.x,c.y);
     if(S.theme==='th_cock'&&dd>S.R-CR){const nx=c.x/dd,ny=c.y/dd;c.x=nx*(S.R-CR);c.y=ny*(S.R-CR);const vn=c.vx*nx+c.vy*ny;if(vn>0){c.vx-=1.8*vn*nx;c.vy-=1.8*vn*ny;}}
-    else if(dd>S.R+CR*.5)eliminate(c,'ตกขอบ');
+    else if(dd>S.R)eliminate(c,'ตกขอบ');
   }
   const L=aliveCars();
   const cs=CR*4.4,grid=new Map();
@@ -424,10 +442,13 @@ function clashStep(h){
 function beginShrink(){
   S.phase='shrink';S.shT=0;S.Rf=S.R;S.Rt=S.round<CFG.rounds?R_of(S.round+1):S.R;
   aliveCars().forEach(c=>{c.vx=c.vy=0;});
+  S.R=S.Rt;   // the playable circle is cut at once; what lies outside the red line falls away
+  for(const c of aliveCars()){if(Math.hypot(c.x,c.y)>S.R)eliminate(c,'หลุดวงที่บีบ');}
+  if(S.Rf>S.Rt+1)for(let k=0;k<10;k++){const a=k/10*TAU+Math.random()*.4,r=(S.Rf+S.Rt)/2;fx('poof',Math.cos(a)*r,Math.sin(a)*r,80);}
 }
 function endRound(){
   S.R=S.Rt;
-  for(const c of aliveCars()){if(Math.hypot(c.x,c.y)>S.R+CR*.3)eliminate(c,'หลุดวงที่บีบ');}
+  for(const c of aliveCars()){if(Math.hypot(c.x,c.y)>S.R)eliminate(c,'หลุดวงที่บีบ');}
   const A=aliveCars();
   if(A.length<=1||S.round>=CFG.rounds){
     S.winner=A.length?A.slice().sort((a,b)=>b.hp-a.hp||b.kills-a.kills)[0]:(S.cars.filter(c=>c.elimR===S.round).sort((a,b)=>b.elimT-a.elimT||b.hp-a.hp||b.kills-a.kills)[0]||null);
@@ -444,7 +465,7 @@ function update(h){
     for(const c of aliveCars()){if(c.bot&&!c.locked&&S.t<c.botT)c.locked=true;if(!c.locked)c.head+=CFG.spin*h;}
     S.t-=h; if(S.t<=0)startClash();
   }else if(S.phase==='clash')clashStep(h);
-  else if(S.phase==='shrink'){S.shT+=h;S.R=S.Rf+(S.Rt-S.Rf)*Math.min(1,S.shT/1.4);if(S.shT>=1.6)endRound();}
+  else if(S.phase==='shrink'){S.shT+=h;if(S.shT>=1.6)endRound();}
   else if(S.phase==='over'){S.overT-=h;if(S.overT<=0)newGame();}
 }
 /* mock viewers */
@@ -460,18 +481,18 @@ function sim(h){
 }
 
 /* ===== drawing: 1080x1920 TikTok portrait screen ===== */
-const CW=1080,CH=1920,AX=540,AY=815;      // arena centre on screen
+const CW=1080,CH=1920,AX=540,AY=866;      // arena centre on screen
 let ASC=1.5;                              // game units -> px, set per map so the rim always ends 75 px from the screen edge
-function arenaScale(th){const M=A.map[th]||A.map.normal;const inner=M.rim?M.rim.meta.inner:CFG.R0/(CFG.R0+16);return 465*inner/CFG.R0;}
+function arenaScale(th){return 302/CFG.R0;}
 const cv=$('#cv'),ctx=cv.getContext('2d');cv.width=CW;cv.height=CH;
 const MAPKEY={normal:'fair',th_frog:'frog',th_beetle:'desert',th_pig:'pig',th_cock:'cock',th_bey:'bey'};
 function ld(o){const i=new Image();i.src=o.u;i.meta=o;return i;}
 const A={map:{},ui:{}};
 for(const th in MAPKEY){const m=ASSETS.maps[MAPKEY[th]];
-  A.map[th]={floor:ld(m.floor),rim:m.rim?ld(m.rim):null,badge:ld(m.badge),backdrop:ld(m.backdrop),cars:m.cars.map(ld)};}
+  A.map[th]={floorInner:m.floorInner||0,floor:ld(m.floor),rim:m.rim?ld(m.rim):null,badge:ld(m.badge),backdrop:ld(m.backdrop),cars:m.cars.map(ld)};}
 const U=ASSETS.ui;
 A.ui={digits:U.digits.map(ld),items:{},effects:{},badges:{},callouts:{},hud:{},cats:{},howto:ld(U.howto),frame:ld(U.avatar_frame)};
-for(const g of ['items','effects','badges','callouts','hud','cats'])for(const k in U[g])A.ui[g][k]=ld(U[g][k]);
+for(const g of ['items','effects','badges','callouts','hud'])for(const k in U[g])A.ui[g][k]=ld(U[g][k]);
 const ok=i=>i&&i.complete&&i.naturalWidth>0;
 function imgC(i,cx,cy,w,h){if(ok(i))ctx.drawImage(i,cx-w/2,cy-h/2,w,h);}
 function fitRect(i,x,y,w,h){const s=Math.min(w/i.naturalWidth,h/i.naturalHeight),dw=i.naturalWidth*s,dh=i.naturalHeight*s;return [x+(w-dw)/2,y+(h-dh)/2,dw,dh];}
@@ -514,37 +535,70 @@ function backdropBlur(th,M){            // soft-focus copy of the backdrop, buil
   const big=document.createElement('canvas');big.width=CW;big.height=CH;const bx=big.getContext('2d');bx.imageSmoothingEnabled=true;bx.imageSmoothingQuality='high';bx.drawImage(sm,0,0,CW,CH);
   return blurCache[th]=big;
 }
+const DUST={normal:'#6a5a8a',th_frog:'#3d5a3d',th_beetle:'#c9a56a',th_pig:'#6fa84a',th_cock:'#a8764a',th_bey:'#4a6a9a'};
+let debris=[],lastShrink=false,lastDrawT=0;
+function drawFloorArt(M,withRim){
+  const R0=CFG.R0;
+  if(ok(M.floor))ctx.drawImage(M.floor,-R0,-R0,2*R0,2*R0);else{ctx.fillStyle='#2b2636';ctx.beginPath();ctx.arc(0,0,R0,0,TAU);ctx.fill();}
+  if(withRim&&M.rim&&ok(M.rim)){const w=2*R0,h=w*M.rim.naturalHeight/M.rim.naturalWidth;ctx.drawImage(M.rim,-w/2,-h/2,w,h);}
+  else if(withRim&&curSkin==='normal'){   // fair: ring of bulbs
+    ctx.strokeStyle='#5a4a7a';ctx.lineWidth=14;ctx.beginPath();ctx.arc(0,0,R0-8,0,TAU);ctx.stroke();
+    const nb=Math.round(R0/4.5);
+    for(let i=0;i<nb;i++){const a=i/nb*TAU,on=(i+Math.floor(S.time*4))%2===0;ctx.fillStyle=on?'#ffe08a':'#b78b2a';ctx.beginPath();ctx.arc(Math.cos(a)*(R0-8),Math.sin(a)*(R0-8),4,0,TAU);ctx.fill();}
+  }
+}
 function drawArena(){
-  const M=curMap(),R=S.R,bb=backdropBlur(curSkin,M);
+  const M=curMap(),R=S.R,R0=CFG.R0,bb=backdropBlur(curSkin,M);
   if(bb)ctx.drawImage(bb,0,0);else cover(M.backdrop);
-  const g=ctx.createRadialGradient(AX,AY,380,AX,AY,1150);g.addColorStop(0,'rgba(8,4,20,0)');g.addColorStop(1,'rgba(8,4,20,.42)');
+  const g=ctx.createRadialGradient(AX,AY,330,AX,AY,1100);g.addColorStop(0,'rgba(8,4,20,0)');g.addColorStop(1,'rgba(8,4,20,.42)');
   ctx.fillStyle=g;ctx.fillRect(0,0,CW,CH);
+  const dt=Math.min(.05,Math.max(0,S.time-lastDrawT));lastDrawT=S.time;
   ctx.save();ctx.translate(AX,AY);ctx.scale(ASC,ASC);
-  const Ro=M.rim?R/(M.rim.meta.inner||.9):R+16;
-  ctx.save();ctx.shadowColor='rgba(0,0,0,.65)';ctx.shadowBlur=70;ctx.shadowOffsetY=34;ctx.fillStyle='#120a1c';ctx.beginPath();ctx.arc(0,0,Ro*.97,0,TAU);ctx.fill();ctx.restore();   // arena sits above the scene
-  const F=R*1.07;                                         // floor runs 7% under the rim so there is no gap between them
-  if(ok(M.floor))ctx.drawImage(M.floor,-F,-F,2*F,2*F);else{ctx.fillStyle='#2b2636';ctx.beginPath();ctx.arc(0,0,R,0,TAU);ctx.fill();}
+  if(S.phase==='shrink'&&!lastShrink&&S.Rf>S.Rt+1){   // the cut: chunks of floor break off along the red line
+    for(let k=0;k<46;k++){const a=Math.random()*TAU,r=S.Rt+Math.random()*(S.Rf-S.Rt);debris.push({x:Math.cos(a)*r,y:Math.sin(a)*r,vx:Math.cos(a)*(20+Math.random()*60),vy:30+Math.random()*90,rot:Math.random()*TAU,vr:(Math.random()-.5)*8,sz:5+Math.random()*10,l:1.4});}
+  }
+  lastShrink=S.phase==='shrink';
+  if(S.phase==='shrink'&&S.Rf>S.Rt+1){        // the ring outside the line tips, darkens and drops away
+    const tt=S.shT,fy=300*tt*tt,sc=1-.14*tt,rot=.06*tt,al=Math.max(0,1-Math.max(0,tt-.7)/.8);
+    ctx.save();ctx.globalAlpha=al;ctx.translate(0,fy);ctx.rotate(rot);ctx.scale(sc,sc);
+    ctx.beginPath();ctx.arc(0,0,S.Rf,0,TAU);ctx.arc(0,0,S.Rt,0,TAU,true);ctx.clip('evenodd');
+    drawFloorArt(M,S.Rf>=R0-1);ctx.fillStyle='rgba(0,0,0,'+Math.min(.55,tt*.6)+')';ctx.fillRect(-R0*1.2,-R0*1.2,R0*2.4,R0*2.4);
+    ctx.restore();
+  }
+  ctx.save();ctx.shadowColor='rgba(0,0,0,.65)';ctx.shadowBlur=70;ctx.shadowOffsetY=34;ctx.fillStyle='#120a1c';ctx.beginPath();ctx.arc(0,0,R*.98,0,TAU);ctx.fill();ctx.restore();   // arena sits above the scene
+  if(R<R0-1){ctx.fillStyle='#2a1826';ctx.beginPath();ctx.arc(0,18,R,0,TAU);ctx.fill();}   // thickness of the cut edge
+  ctx.save();ctx.beginPath();ctx.arc(0,0,R,0,TAU);ctx.clip();drawFloorArt(M,R>=R0-1);ctx.restore();   // the floor keeps its size; only what is inside the red line is left
   if(curSkin==='th_beetle'){   // sand storm direction shown on the floor
     ctx.save();ctx.beginPath();ctx.arc(0,0,R,0,TAU);ctx.clip();ctx.strokeStyle='rgba(255,240,200,.45)';ctx.lineWidth=3;ctx.lineCap='round';
     const ca=Math.cos(S.windA),sa=Math.sin(S.windA);
     for(let i=0;i<12;i++){const a=i*2.399,r=Math.sqrt((i+.5)/12)*(R-30),x=Math.cos(a)*r,y=Math.sin(a)*r;ctx.beginPath();ctx.moveTo(x-ca*18,y-sa*18);ctx.lineTo(x+ca*18,y+sa*18);ctx.moveTo(x+ca*18,y+sa*18);ctx.lineTo(x+ca*8-sa*6,y+sa*8+ca*6);ctx.moveTo(x+ca*18,y+sa*18);ctx.lineTo(x+ca*8+sa*6,y+sa*8-ca*6);ctx.stroke();}
     ctx.restore();
   }
-  if(S.phase==='setup'&&S.round<CFG.rounds){ctx.save();ctx.setLineDash([6,8]);ctx.strokeStyle='rgba(255,84,112,.6)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,R_of(S.round+1),0,TAU);ctx.stroke();ctx.restore();}
-  if(M.rim&&ok(M.rim)){const inner=M.rim.meta.inner||.9,w=2*R/inner,h=w*M.rim.naturalHeight/M.rim.naturalWidth;ctx.drawImage(M.rim,-w/2,-h/2,w,h);}
-  else{ // fair: ring of bulbs
-    ctx.strokeStyle='#5a4a7a';ctx.lineWidth=16;ctx.beginPath();ctx.arc(0,0,R+8,0,TAU);ctx.stroke();
-    const nb=Math.max(16,Math.round(R/4.5));
-    for(let i=0;i<nb;i++){const a=i/nb*TAU,on=(i+Math.floor(S.time*4))%2===0;ctx.fillStyle=on?'#ffe08a':'#b78b2a';ctx.beginPath();ctx.arc(Math.cos(a)*(R+8),Math.sin(a)*(R+8),4.2,0,TAU);ctx.fill();}
+  if(S.phase==='setup'&&S.round<CFG.rounds){   // where the edge will be next round: plain deep-red dashes
+    ctx.save();ctx.setLineDash([16,10]);ctx.lineDashOffset=-S.time*20;ctx.beginPath();ctx.arc(0,0,R_of(S.round+1),0,TAU);
+    ctx.lineWidth=7;ctx.strokeStyle='#c1121f';ctx.stroke();ctx.restore();
   }
+  // solid line on the outer edge: a car whose middle crosses it falls
+  ctx.beginPath();ctx.arc(0,0,R-3.5,0,TAU);ctx.lineWidth=9;ctx.strokeStyle='rgba(32,12,38,.92)';ctx.stroke();ctx.lineWidth=5;ctx.strokeStyle='#fff3cf';ctx.stroke();
+  // falling chunks
+  ctx.fillStyle=DUST[curSkin]||'#777';
+  for(let i=debris.length-1;i>=0;i--){const d=debris[i];d.l-=dt;if(d.l<=0){debris.splice(i,1);continue;}d.vy+=700*dt;d.x+=d.vx*dt;d.y+=d.vy*dt;d.rot+=d.vr*dt;
+    ctx.save();ctx.globalAlpha=Math.min(1,d.l*1.6);ctx.translate(d.x,d.y);ctx.rotate(d.rot);ctx.fillRect(-d.sz/2,-d.sz/2,d.sz,d.sz*.7);ctx.strokeStyle='rgba(20,8,24,.7)';ctx.lineWidth=1.5;ctx.strokeRect(-d.sz/2,-d.sz/2,d.sz,d.sz*.7);ctx.restore();}
   ctx.restore();
 }
-function drawCountdown(){
-  if(S.phase!=='setup')return;const s=String(Math.ceil(S.t)),hh=380,ims=[...s].map(d=>A.ui.digits[+d]);
-  let total=0;ims.forEach(i=>{if(ok(i))total+=i.naturalWidth/i.naturalHeight*hh*.9;});
-  ctx.save();ctx.globalAlpha=.34;let x=AX-total/2;
-  ims.forEach(i=>{if(!ok(i))return;const w=i.naturalWidth/i.naturalHeight*hh;ctx.drawImage(i,x,AY-hh/2,w,hh);x+=w*.9;});
+function drawCountdown(){      // big countdown in the top right corner beside the arena, every round
+  if(S.phase!=='setup')return;
+  const n=Math.ceil(S.t),s=String(n),hh=128,CX=950,CY=745,last=S.t<=3,pulse=last?1+.12*Math.abs(Math.sin(S.t*Math.PI*2)):1;
+  const ims=[...s].map(d=>A.ui.digits[+d]);let total=0;
+  ims.forEach(i=>{if(ok(i))total+=i.naturalWidth/i.naturalHeight*hh*.86;});
+  ctx.save();ctx.translate(CX,CY);ctx.scale(pulse,pulse);
+  ctx.beginPath();ctx.arc(0,0,100,0,TAU);ctx.fillStyle=last?'rgba(120,10,30,.62)':'rgba(30,14,48,.58)';ctx.fill();
+  ctx.lineWidth=6;ctx.strokeStyle=last?'#ff5470':'#fdebc6';ctx.stroke();
+  let x=-total/2;
+  ims.forEach(i=>{if(!ok(i))return;const w=i.naturalWidth/i.naturalHeight*hh;ctx.drawImage(i,x,-hh/2-4,w,hh);x+=w*.86;});
   ctx.restore();
+  ftext('เหลือเวลา',CX,CY-132,200,28,'#fff6dc','#14111a');
+  ftext('วินาที',CX,CY+134,200,28,'#fff6dc','#14111a');
 }
 
 /* ---- things inside the arena (game units) ---- */
@@ -565,7 +619,7 @@ function drawAvatarDisc(c,rad){
 function drawCar(c){
   if(!c.alive&&c.fall<=0)return;
   const M=curMap(),spr=M.cars[c.id%6],u=CR/CFG.carR;let sc=1,al=1;if(!c.alive){sc=c.fall;al=c.fall;}
-  ctx.save();ctx.translate(c.x,c.y);ctx.scale(sc,sc);ctx.globalAlpha=al;
+  ctx.save();ctx.translate(c.x,c.y+(c.alive?0:(1-c.fall)*70));ctx.scale(sc,sc);ctx.globalAlpha=al;
   if(c.gear>0){ctx.save();ctx.scale(u,u);ctx.rotate(S.time*4);ctx.setLineDash([8,6]);ctx.lineWidth=4;ctx.strokeStyle=C.bulb;ctx.beginPath();ctx.arc(0,0,CFG.carR+12*c.gear,0,TAU);ctx.stroke();ctx.restore();}
   const hr=.58*CR;
   drawAvatarDisc(c,hr);                                   // profile picture stays upright inside the hole
@@ -605,35 +659,65 @@ function drawHud(tk){
   r=fitBox(H.alive_plate,850,200,190,160);
   if(r)boxText('เหลือ '+aliveCars().length,tbRect(H.alive_plate,r,H.alive_plate.meta.tb),INK,52);
 }
-const CATS=[
-  ['cat_turn',['GG = หมุนซ้าย','TikTok = หมุนขวา']],
-  ['cat_aim',['Rose = พุ่งใส่คนใกล้สุด','ไลก์ = ล็อกทิศฟรี']],
-  ['cat_guard',['Love you = โล่ 1 ครั้ง',"You're awesome = ฮีล"]],
-  ['cat_fight',['Doughnut = กงจักรหมุน','Ice Cream = แช่แข็ง']],
-  ['cat_map',['Tiny Diny = หนองบึง','Finger Heart = ทะเลทราย']],
-  ['cat_map',['G.O.A.T. Busker = ทุ่งหญ้า','Mishka Bear = ลานไก่ชน']],
-  ['cat_map',['Hat and Mustache = เบเบลด','ยอดของขวัญรวมมากสุดชนะ']],
-  ['cat_flip',['ล้มกระดาน!','ทุกคนตก คนส่งชนะ']],
-  ['cat_free',['ไลก์ = ล็อกทิศ','ติดตาม ×2 · แชร์ เร็วขึ้น']]
-];
-const STRIP=[40,1290,890,290];
-let catSize=0;
-function calcCatSize(){
-  if(catSize)return catSize;let m=46;
-  for(const [k,lines] of CATS){const ci=A.ui.cats[k];if(!ok(ci))return 0;m=Math.min(m,fitSize(lines,tbRect(ci,fitRect(ci,...STRIP),ci.meta.tb),46));}
-  return catSize=m;
+/* gift menu: a panel drawn here (not a picture): title, then 4 gifts per page as  picture + what it does + gift name */
+function glyph(kind,cx,cy,s){   // small vector pictures for the free actions (no gift picture exists for them)
+  ctx.save();ctx.translate(cx,cy);ctx.lineJoin='round';ctx.lineCap='round';ctx.strokeStyle='#3a1a3a';ctx.lineWidth=s*.07;
+  if(kind==='like'){ctx.fillStyle='#ff5470';ctx.beginPath();ctx.moveTo(0,s*.34);ctx.bezierCurveTo(-s*.62,-s*.05,-s*.34,-s*.5,0,-s*.2);ctx.bezierCurveTo(s*.34,-s*.5,s*.62,-s*.05,0,s*.34);ctx.fill();ctx.stroke();}
+  else if(kind==='follow'){ctx.fillStyle='#37d3bb';ctx.beginPath();ctx.arc(-s*.08,-s*.2,s*.2,0,TAU);ctx.fill();ctx.stroke();ctx.beginPath();ctx.ellipse(-s*.08,s*.28,s*.3,s*.2,0,Math.PI,TAU);ctx.fill();ctx.stroke();
+    ctx.strokeStyle='#ffd166';ctx.lineWidth=s*.1;ctx.beginPath();ctx.moveTo(s*.3,-s*.05);ctx.lineTo(s*.3,s*.25);ctx.moveTo(s*.15,s*.1);ctx.lineTo(s*.45,s*.1);ctx.stroke();}
+  else{ctx.fillStyle='#5aa8ff';ctx.beginPath();ctx.moveTo(-s*.4,s*.25);ctx.bezierCurveTo(-s*.4,-s*.15,-s*.1,-s*.2,s*.12,-s*.2);ctx.lineTo(s*.12,-s*.4);ctx.lineTo(s*.48,0);ctx.lineTo(s*.12,s*.4);ctx.lineTo(s*.12,s*.2);ctx.bezierCurveTo(-s*.12,s*.2,-s*.3,s*.22,-s*.4,s*.25);ctx.closePath();ctx.fill();ctx.stroke();}
+  ctx.restore();
 }
+function lt(txt,x,y,maxW,size,col){   // left-aligned text, shrinks to fit, centred on the letter body
+  let s=size;const f=()=>'500 '+s+'px '+FONT;ctx.font=f();while(ctx.measureText(txt).width>maxW&&s>9){s--;ctx.font=f();}
+  ctx.textAlign='left';ctx.textBaseline='alphabetic';const m=ctx.measureText('อ');ctx.fillStyle=col;ctx.fillText(txt,x,y+(m.actualBoundingBoxAscent-m.actualBoundingBoxDescent)/2);return s;
+}
+/* gift menu: always on screen, split into a left and a right panel (like the cafe game's menu):
+   picture + what it does + gift name. Only the map gifts get a heading. */
+const LEFTG=[
+  {g:'gg',t:'หมุนซ้าย',n:'GG'},{g:'tiktok',t:'หมุนขวา',n:'TikTok'},{g:'rose',t:'พุ่งชนคันใกล้สุด',n:'Rose'},
+  {g:'love',t:'โล่กันชน 1 ครั้ง',n:'Love you so much'},{g:'awesome',t:'ฮีลเลือด +40',n:"You're awesome"},
+  {g:'donut',t:'กงจักรตีไกลขึ้น',n:'Doughnut'},{g:'ice',t:'แช่แข็งคู่ต่อสู้',n:'Ice Cream Cone'}
+];
+const RIGHTG=[
+  {g:'th_frog',t:'แมพหนองบึง',n:'Tiny Diny'},{g:'th_beetle',t:'แมพทะเลทราย',n:'Finger Heart'},{g:'th_pig',t:'แมพทุ่งหญ้า',n:'G.O.A.T. Busker'},
+  {g:'th_cock',t:'แมพลานไก่ชน',n:'Mishka Bear'},{g:'th_bey',t:'แมพเบเบลด',n:'Hat and Mustache'},
+  {g:'flip',t:'ล้มกระดาน ชนะคนเดียว',n:'Boxing Gloves'},{f:'follow',t:'ติดตาม โจมตี ×2',n:'แชร์ พุ่งเร็วขึ้น'}
+];
+const PNL={y:1180,h:396,lx:30,rx:498,w:452,ic:46};
+let gSize=0;
+function calcGiftSize(){
+  if(gSize)return gSize;const tw=PNL.w-24-PNL.ic-14-10;let m=28;
+  for(const it of LEFTG.concat(RIGHTG)){let s=28;ctx.font='500 '+s+'px '+FONT;while(ctx.measureText(it.t).width>tw&&s>9){s--;ctx.font='500 '+s+'px '+FONT;}m=Math.min(m,s);}
+  return gSize=m;
+}
+function drawPanel(items,x,title,sepAfter){
+  const {y,h,w,ic}=PNL,sz=calcGiftSize(),rh=(h-48)/7,top=y+34;
+  ctx.save();
+  ctx.beginPath();ctx.roundRect(x,y,w,h,30);ctx.fillStyle='rgba(38,22,56,.94)';ctx.fill();ctx.lineWidth=6;ctx.strokeStyle='#fdebc6';ctx.stroke();
+  ctx.setLineDash([10,8]);ctx.lineWidth=2.5;ctx.strokeStyle='rgba(232,162,174,.8)';ctx.beginPath();ctx.roundRect(x+11,y+11,w-22,h-22,22);ctx.stroke();ctx.setLineDash([]);
+  items.forEach((it,i)=>{
+    const cy=top+i*rh+rh/2,ix=x+22,iy=cy-ic/2;
+    ctx.beginPath();ctx.arc(ix+ic/2,cy,ic/2+1,0,TAU);ctx.fillStyle='rgba(255,243,207,.2)';ctx.fill();
+    if(it.g&&ok(imgs[it.g]))ctx.drawImage(imgs[it.g],ix+2,iy+2,ic-4,ic-4);else if(it.f)glyph(it.f,ix+ic/2,cy,ic*.85);
+    const tx=ix+ic+14,tw=w-22-ic-14-18;
+    lt(it.t,tx,cy-8,tw,sz,'#fff6dc');lt(it.n,tx,cy+14,tw,Math.max(14,Math.round(sz*.66)),'#ffd166');
+  });
+  if(sepAfter){const sy=top+sepAfter*rh;ctx.setLineDash([8,8]);ctx.lineWidth=2;ctx.strokeStyle='rgba(232,162,174,.7)';ctx.beginPath();ctx.moveTo(x+26,sy);ctx.lineTo(x+w-26,sy);ctx.stroke();ctx.setLineDash([]);}
+  if(title){   // heading pill sits on the top border
+    ctx.font='500 30px '+FONT;const tw=Math.min(w-60,ctx.measureText(title).width+70),px=x+w/2-tw/2;
+    ctx.beginPath();ctx.roundRect(px,y-24,tw,48,24);ctx.fillStyle='#e2569a';ctx.fill();ctx.lineWidth=5;ctx.strokeStyle='#fdebc6';ctx.stroke();
+    ftext(title,x+w/2,y,tw-30,30,'#fff6dc');
+  }
+  ctx.restore();
+}
+function drawPanels(){drawPanel(LEFTG,PNL.lx,null,0);drawPanel(RIGHTG,PNL.rx,'เปลี่ยนแมพ',5);}
 const HOWTO=[['เข้าไลฟ์','ได้รถทันที'],['กดใจเพื่อล็อกทิศทาง','ก่อนหมดเวลา 10 วิ'],['ชน!','รถทุกคันพุ่งพร้อมกัน'],['ตกขอบ = ออก','คันสุดท้ายชนะ']];
 function plate(x,y,w,h){ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,h,h*.3);ctx.fillStyle='#fdebc6';ctx.fill();ctx.lineWidth=4;ctx.strokeStyle='#7a3a5a';ctx.stroke();ctx.setLineDash([8,6]);ctx.lineWidth=2.5;ctx.strokeStyle='#e8a2ae';ctx.beginPath();ctx.roundRect(x+7,y+7,w-14,h-14,h*.24);ctx.stroke();ctx.restore();}
-function drawStrip(){
-  const [X,Y,Wd,Ht]=STRIP;
-  if(S.round===1&&S.phase==='setup'){
-    const hw=A.ui.howto,r=fitBox(hw,X,Y,Wd,Ht);
-    if(r)HOWTO.forEach((lines,i)=>{const b=tbRect(hw,r,hw.meta.tbs[i],0,0),pw=r[2]/4*.94,ph=84,px=b[0]+b[2]/2-pw/2,py=b[1]-6;plate(px,py,pw,ph);boxText(lines,[px+14,py+12,pw-28,ph-24],INK,32);});
-    return;
-  }
-  const [k,lines]=CATS[Math.floor(S.time/5)%CATS.length],ci=A.ui.cats[k],r=fitBox(ci,X,Y,Wd,Ht),sz=calcCatSize();
-  if(r&&sz)boxText(lines,tbRect(ci,r,ci.meta.tb),INK,sz);
+function drawHowto(){
+  const hw=A.ui.howto;if(!ok(hw))return;
+  const r=fitBox(hw,60,326,960,222);
+  if(r)HOWTO.forEach((lines,i)=>{const b=tbRect(hw,r,hw.meta.tbs[i],0,0),pw=r[2]/4*.95,ph=66,px=b[0]+b[2]/2-pw/2,py=b[1]-5;plate(px,py,pw,ph);boxText(lines,[px+10,py+9,pw-20,ph-18],INK,26);});
 }
 function drawClashBurst(){
   if(S.phase!=='clash'||S.clashT>1)return;
@@ -664,14 +748,15 @@ function drawOver(){
 function draw(){
   ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,CW,CH);ctx.fillStyle='#17141d';ctx.fillRect(0,0,CW,CH);
   const tk=S.phase==='setup'?leadTheme():S.theme;curSkin=tk;ASC=arenaScale(tk);
+  ctx.save();if(S.phase==='shrink'&&S.shT<.45){const a=(1-S.shT/.45)*8;ctx.translate((Math.random()-.5)*a*2,(Math.random()-.5)*a*2);}
   drawArena();drawCountdown();
   ctx.save();ctx.translate(AX,AY);ctx.scale(ASC,ASC);
   S.items.forEach(drawItem);
   S.cars.slice().sort((a,b)=>a.y-b.y).forEach(drawCar);
   drawFx();
   S.parts.forEach(p=>{ctx.globalAlpha=Math.max(0,p.l*2);ctx.fillStyle='hsl('+p.hue+' 90% 65%)';ctx.fillRect(p.x-2,p.y-2,4,4);});ctx.globalAlpha=1;
-  ctx.restore();
-  drawHud(tk);if(S.phase!=='over')drawStrip();drawClashBurst();drawOver();
+  ctx.restore();ctx.restore();
+  drawHud(tk);drawPanels();drawHowto();drawClashBurst();drawOver();
 }
 
 /* UI */
