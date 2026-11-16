@@ -483,7 +483,7 @@ function sim(h){
 }
 
 /* ===== drawing: 1080x1920 TikTok portrait screen ===== */
-const CW=1080,CH=2400,OFF=160,AX=540,AY=985;   // 1080x2400 = a 9:20 phone screen; OFF = small top margin
+const CW=1080,CH=2400,OFF=160,AX=540,AY=1018;   // 1080x2400 = a 9:20 phone screen; OFF = small top margin
       // arena centre on screen
 let ASC=1.5;                              // game units -> px, set per map so the rim always ends 75 px from the screen edge
 function arenaScale(th){return 472/CFG.R0;}
@@ -720,7 +720,7 @@ function drawPanel(items,x,title,sepAfter,o){
   ctx.restore();
 }
 function drawFreeFrame(){   // like / follow / share: own frame, centre top, just above the arena
-  const w=640,h=64,x=AX-w/2,y=418,cw=w/3;
+  const w=640,h=64,x=AX-w/2,y=452,cw=w/3;
   ctx.save();
   ctx.beginPath();ctx.roundRect(x,y,w,h,28);ctx.fillStyle='rgba(38,22,56,.94)';ctx.fill();ctx.lineWidth=5;ctx.strokeStyle='#fdebc6';ctx.stroke();
   FREEG.forEach((it,i)=>{
@@ -732,13 +732,14 @@ function drawFreeFrame(){   // like / follow / share: own frame, centre top, jus
   ctx.restore();
 }
 function drawPanels(){drawPanel(LEFTG,PNL.lx,null,0);drawPanel(RIGHTG,PNL.rx,'ล็อกแมพ',0,{y:76,h:450});drawFreeFrame();}
-const HOWTO=[['เข้าไลฟ์','ได้รถ'],['กดใจ ล็อกทิศ','ก่อนหมด 10 วิ'],['ชน!','พุ่งพร้อมกัน'],['ตกขอบ = ออก','เหลือคันเดียวชนะ']];
+const HOWTO=[['เข้าไลฟ์','ได้รถ'],['กดใจ','ล็อกทิศ','ก่อน 10 วิ'],['ชน!','พร้อมกัน'],['ตกขอบ=ออก','คันสุดท้าย','ชนะ']];
 function plate(x,y,w,h){ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,h,h*.3);ctx.fillStyle='#fdebc6';ctx.fill();ctx.lineWidth=4;ctx.strokeStyle='#7a3a5a';ctx.stroke();ctx.setLineDash([8,6]);ctx.lineWidth=2.5;ctx.strokeStyle='#e8a2ae';ctx.beginPath();ctx.roundRect(x+7,y+7,w-14,h-14,h*.24);ctx.stroke();ctx.restore();}
 function drawHowto(){
   const hw=A.ui.howto;if(!ok(hw))return;
-  const r=fitBox(hw,236,182,608,146);
-  let hs=40;if(r){const pw0=r[2]/4*.97-16;HOWTO.forEach(l=>{hs=Math.min(hs,fitSize(l,[0,0,pw0,(98-20)],40));});}
-  if(r)HOWTO.forEach((lines,i)=>{const b=tbRect(hw,r,hw.meta.tbs[i],0,0),pw=r[2]/4*.97,ph=98,px=b[0]+b[2]/2-pw/2,py=b[1]-14;plate(px,py,pw,ph);boxText(lines,[px+8,py+10,pw-16,ph-20],INK,hs);});
+  const r=fitBox(hw,236,176,608,146);if(!r)return;
+  const PH=152,pw=r[2]/4*.98;let hs=36;
+  const inner=[0,0,pw-14,PH-22];HOWTO.forEach(l=>{hs=Math.min(hs,fitSize(l,inner,36));});
+  HOWTO.forEach((lines,i)=>{const b=tbRect(hw,r,hw.meta.tbs[i],0,0),px=b[0]+b[2]/2-pw/2,py=b[1]-12;plate(px,py,pw,PH);boxText(lines,[px+7,py+11,pw-14,PH-22],INK,hs);});
 }
 function drawClashBurst(){
   if(S.phase!=='clash'||S.clashT>1)return;
