@@ -800,12 +800,10 @@ function drawQueue(){   // profiles of everyone who joined during this game: the
   ftext(n+' คน'+(show<n?' (แสดง '+show+')':''),x+w/2,y+h-18,w-20,22,'#ffd166');
   ctx.restore();
 }
-function drawMapNote(){   // what the chosen map does, written under the arena
+function drawMapNote(){   // what the chosen map does, written under the arena (plain text, no frame)
   if(!activeMapKey)return;const it=RIGHTG.find(r=>r.k===activeMapKey);if(!it)return;
-  const A_=LAY.arena,txt='แมพ'+it.t+' · '+it.e,sz=Math.max(24,Math.min(44,A_.w*.045))*A_.fs/100;
-  ctx.save();ctx.font='500 '+sz+'px '+FONT;const w=Math.min(CW-40,ctx.measureText(txt).width+sz*1.8),h=sz*1.9,x=A_.x+A_.w/2-w/2,y=A_.y+A_.h+14;
-  ctx.beginPath();ctx.roundRect(x,y,w,h,h/2);ctx.fillStyle='rgba(38,22,56,.94)';ctx.fill();ctx.lineWidth=4;ctx.strokeStyle='#fdebc6';ctx.stroke();ctx.restore();
-  ftext(txt,x+w/2,y+h/2,w-sz,sz,'#fff6dc');
+  const A_=LAY.arena,txt='แมพ '+it.t+' : '+it.e,sz=Math.max(26,Math.min(48,A_.w*.05))*A_.fs/100;
+  ftext(txt,A_.x+A_.w/2,A_.y+A_.h+14+sz*.8,CW-40,sz,'#fff6dc','#14111a');
 }
 function drawPanels(){drawPanel(LEFTG,LAY.left,null,0);drawPanel(RIGHTG,LAY.right,TXT.rightTitle,0);drawFreeFrame();drawQueue();drawMapNote();}
 const HOWTO=[['เข้าไลฟ์','ได้รถ'],['กดใจ','ล็อกทิศ','ก่อน 10 วิ'],['ชน!','พร้อมกัน'],['อยู่รอด','= ชนะ']];
