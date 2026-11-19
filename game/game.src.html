@@ -487,7 +487,7 @@ function update(h){
   sim(h);
   if(S.phase==='setup'){
     for(const c of aliveCars()){if(c.bot&&!c.locked&&S.t<c.botT){c.locked=true;botAim(c);}if(!c.locked)c.head+=CFG.spin*h;}
-    S.t-=h;{const k=Math.ceil(S.t);if(k!==S.lastTick){S.lastTick=k;if(k>=1&&k<=10&&!sayNum(k)&&k<=3)sfx(k===1?'tick2':'tick');}}if(S.t<=0){S.t=0;enterGo();}
+    S.t-=h;{const k=Math.ceil(S.t);if(k!==S.lastTick){S.lastTick=k;if(k>=1&&k<=3)sfx(k===1?'tick2':'tick');}}if(S.t<=0){S.t=0;enterGo();}
   }else if(S.phase==='go'){S.goT+=h;if(S.goT>=.9)startClash();}else if(S.phase==='clash')clashStep(h);
   else if(S.phase==='shrink'){S.shT+=h;if(S.shT>=1.6)endRound();}
   else if(S.phase==='over'){S.overT-=h;if(S.overT<=0)newGame();}
@@ -930,7 +930,7 @@ function speak(text,cancel,onstart){
     if(onstart){u.onstart=onstart.start;u.onend=u.onerror=onstart.end;}speechSynthesis.speak(u);return true;}catch(e){return false;}
 }
 function say(text){return speak(text,true);}
-function sayNum(k){if(thanksQ>0)return false;return say(NUMS[k]||String(k));}   // a "thank you" in progress is never cut off by the countdown
+
 function cleanName(n){return String(n).replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}]/gu,'').replace(/[0-9]+$/,'').trim();}
 function announce(name,gid){
   sfx('gift');if(thanksQ>=2)return;
@@ -941,7 +941,7 @@ function announce(name,gid){
 (function(){
   const pn=document.querySelector('#play .panel');if(!pn)return;
   const row=document.createElement('div');row.className='row tools';
-  row.innerHTML='<label><input type="checkbox" id="sfxOn" checked> เสียงเอฟเฟกต์</label><label><input type="checkbox" id="voiceOn" checked> เสียงพูด (นับถอยหลัง + ขอบคุณ)</label><button id="voiceTest">ทดสอบเสียง</button>';
+  row.innerHTML='<label><input type="checkbox" id="sfxOn" checked> เสียงเอฟเฟกต์</label><label><input type="checkbox" id="voiceOn" checked> เสียงขอบคุณของขวัญ (AI)</label><button id="voiceTest">ทดสอบเสียง</button>';
   pn.appendChild(row);
   document.querySelector('#sfxOn').checked=SND.sfx;document.querySelector('#voiceOn').checked=SND.voice;
   document.querySelector('#sfxOn').onchange=e=>{SND.sfx=e.target.checked;};
@@ -1059,7 +1059,7 @@ function drawEditOverlay(){
    <div><b>ไอเท็มให้คนที่เลือก</b><div class="row" style="margin-top:6px"><button data-ti="speed">ยาความเร็ว</button><button data-ti="heal">ฮีล</button><button data-ti="range">ระยะโจมตี</button></div></div>
    <div><b>บังคับแมพ (ล็อกทั้งเกม)</b><div class="row" style="margin-top:6px">${Object.keys(THEMES).map(k=>'<button data-tm="'+k+'">'+THEMES[k].name+'</button>').join('')}</div></div>
    <div><b>ขนาดจอ (ดูว่า UI ปรับตามไหม)</b><div class="row" style="margin-top:6px">${[['9:20','1080/2400'],['9:19.5','1080/2340'],['9:18','1080/2160'],['9:16','1080/1920'],['3:4','3/4'],['16:9 แนวนอน','16/9']].map(a=>'<button data-tz="'+a[1]+'">'+a[0]+'</button>').join('')}</div></div>
-   <div><b>เสียง</b><div class="row" style="margin-top:6px"><button data-ta="sounds">เล่นเสียงเอฟเฟกต์ทั้งหมด</button><button data-ta="count">ทดสอบเสียงพูด (นับถอยหลัง + ขอบคุณ)</button></div></div>
+   <div><b>เสียง</b><div class="row" style="margin-top:6px"><button data-ta="sounds">เล่นเสียงเอฟเฟกต์ทั้งหมด</button><button data-ta="count">ทดสอบเสียงขอบคุณของขวัญ (AI)</button></div></div>
    <p class="note">ใช้บน OBS / LIVE Studio: ต่อ <b>?stage=1</b> ท้ายลิงก์ จอเกมจะเต็มหน้าต่างและปรับตามขนาดที่ตั้ง</p>
   </div>`;
   host.appendChild(d);
@@ -1082,7 +1082,7 @@ function drawEditOverlay(){
       case 'kill':{const c=car();if(c)eliminate(c,'ตกขอบ (ทดสอบ)');break;}
       case 'auto':{const a=document.querySelector('#auto');a.checked=!a.checked;log('คนดูจำลอง: '+(a.checked?'เปิด':'ปิด'));break;}
       case 'sounds':{const a=audio();if(a&&a.state==='suspended')a.resume();Object.keys(SFX).forEach((k,i)=>setTimeout(()=>{lastSfx={};sfx(k);},i*550));break;}
-      case 'count':{const a=audio();if(a&&a.state==='suspended')a.resume();let k=3;const f=()=>{say(NUMS[k]);k--;if(k>=1)setTimeout(f,1000);};f();break;}
+      case 'thanks':{const a=audio();if(a&&a.state==='suspended')a.resume();announce('พี่ต้น','gg');break;}
     }
   });
 })();
